@@ -15,7 +15,7 @@ perfect, or complete, it could use any suggestion for enhancing it,
 just to avoid losing time on useless matters for others.
 
 Be warned that, when comparing with other format, the following is assumed:
-there are no empty line (especially at the end of file). Gnuplot comment lines
+there are no empty lines (especially at the end of file). Gnuplot comment lines
 (starting with a # are allowed). This issue will cause a non-very descriptive
 error in CPU, any suggestion for testing it is welcome.
 

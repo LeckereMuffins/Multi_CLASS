@@ -117,9 +117,9 @@ int transfer_init(
                   struct background * pba,
                   struct thermo * pth,
                   struct perturbs * ppt,
+                  struct primordial * ppm,
                   struct nonlinear * pnl,
-                  struct transfers * ptr
-                  ) {
+                  struct transfers * ptr) {
 
   /** Summary: */
 
@@ -299,6 +299,8 @@ int transfer_init(
   class_call(transfer_precompute_selection(ppr,
                                            pba,
                                            ppt,
+                                           ppm,
+                                           pnl,
                                            ptr,
                                            tau_rec,
                                            tau_size_max,
@@ -365,6 +367,8 @@ int transfer_init(
       class_call_parallel(transfer_compute_for_each_q(ppr,
                                                       pba,
                                                       ppt,
+                                                      ppm,
+                                                      pnl,
                                                       ptr,
                                                       tp_of_tt,
                                                       index_q,
@@ -883,10 +887,10 @@ int transfer_get_l_list(
 
   /** - allocate and fill l array */
 
-  /** - start from l = 2 and increase with logarithmic step */
+  /** - start from l = 1 and increase with logarithmic step */
 
   index_l = 0;
-  current_l = 2;
+  current_l = 1;
   increment = MAX((int)(current_l * (pow(ppr->l_logstep,ptr->angular_rescaling)-1.)),1);
 
   while (((current_l+increment) < l_max) &&
@@ -927,7 +931,7 @@ int transfer_get_l_list(
   class_alloc(ptr->l,ptr->l_size_max*sizeof(int),ptr->error_message);
 
   index_l = 0;
-  ptr->l[0] = 2;
+  ptr->l[0] = 1;
   increment = MAX((int)(ptr->l[0] * (pow(ppr->l_logstep,ptr->angular_rescaling)-1.)),1);
 
   while (((ptr->l[index_l]+increment) < l_max) &&
@@ -1684,6 +1688,8 @@ int transfer_compute_for_each_q(
                                 struct precision * ppr,
                                 struct background * pba,
                                 struct perturbs * ppt,
+                                struct primordial * ppm,
+                                struct nonlinear * pnl,
                                 struct transfers * ptr,
                                 int ** tp_of_tt,
                                 int index_q,
@@ -1804,6 +1810,8 @@ int transfer_compute_for_each_q(
           class_call(transfer_sources(ppr,
                                       pba,
                                       ppt,
+                                      ppm,
+                                      pnl,
                                       ptr,
                                       interpolated_sources,
                                       tau_rec,
@@ -2090,6 +2098,8 @@ int transfer_sources(
                      struct precision * ppr,
                      struct background * pba,
                      struct perturbs * ppt,
+                     struct primordial * ppm,
+                     struct nonlinear * pnl,
                      struct transfers * ptr,
                      double * interpolated_sources,
                      double tau_rec,
@@ -2294,6 +2304,8 @@ int transfer_sources(
         class_call(transfer_selection_compute(ppr,
                                               pba,
                                               ppt,
+                                              ppm,
+                                              pnl,
                                               ptr,
                                               selection,
                                               tau0_minus_tau,
@@ -2462,8 +2474,11 @@ int transfer_sources(
  */
 
 int transfer_selection_function(
+                                struct background * pba,
                                 struct precision * ppr,
                                 struct perturbs * ppt,
+                                struct primordial * ppm,
+                                struct nonlinear * pnl,
                                 struct transfers * ptr,
                                 int bin,
                                 int tracer,
@@ -2471,13 +2486,13 @@ int transfer_selection_function(
                                 double * selection) {
 
   double x;
-  double dNdz;
+  double dNdz; //definition without initialisation
   int last_index;
 
   /* trivial dirac case */
   if (ptr->selection_window == dirac) {
 
-    *selection = 1.;
+    *selection = 1.; // the value at address "selection" is assigned 1
 
     return _SUCCESS_;
   }
@@ -2485,11 +2500,13 @@ int transfer_selection_function(
   /* difference between z and the bin center (we can take the absolute
      value as long as all selection functions are symmetric around
      x=0) */
+
   x=fabs(z-ptr->selection_mean[bin]);
 
   /* gaussian case (the function is anyway normalized later
      automatically, but could not resist to normalize it already
      here) */
+
   if (ptr->selection_window == gaussian) {
 
     *selection = exp(-0.5*pow(x/ptr->selection_width[bin],2))
@@ -2504,7 +2521,7 @@ int transfer_selection_function(
                ptr->error_message,
                ptr->error_message);
     
-    *selection *= dNdz;
+    *selection *= dNdz; //multiplication
 
     return _SUCCESS_;
   }
@@ -2538,6 +2555,124 @@ int transfer_selection_function(
                ptr->error_message);
     
     *selection *= dNdz;
+
+    return _SUCCESS_;
+  }
+
+  if (ptr->selection_window == gw_frequency_dep) {
+
+    //using arXiv:2206.02747, window function from equation 2.5
+    //neglect factors of omega_agwb, bc. they cancel out in the window fct.
+
+    int omega_agwb_step_count = 50;
+    double integrand_omega_agwb[3*omega_agwb_step_count]; 
+    int i_z;
+
+    for(i_z=0; i_z<omega_agwb_step_count; i_z++){
+
+      double z_run = i_z/omega_agwb_step_count*5; //maximum redshift of 5
+      double bbh_merger_rate_run;
+      class_call(transfer_bbh_merger_rate(
+                                        ppr,
+                                        pba,
+                                        ppm,
+                                        pnl,
+                                        ptr,
+                                        z_run,
+                                        bbh_merger_rate_run),
+                                        ptr->error_message,
+                                        ptr->error_message);
+
+      double dE_df_e_dOmega_e_run;
+      class_call(transfer_dE_df_e_dOmega_e(
+                                          pba,
+                                          ptr,
+                                          ptr->gw_frequency,
+                                          z_run,
+                                          30000, //in geometric units (meters)
+                                          30000,
+                                          dE_df_e_dOmega_e_run),
+                                          ptr->error_message,
+                                          ptr->error_message);
+
+      double * tau_run;
+      class_call(background_tau_of_z(pba,
+                                    z,
+                                    tau_run),
+                                    pba->error_message,
+                                    ptr->error_message);
+
+      double pvecback[pba->short_info];
+      int * last_index;
+      class_call(background_at_tau(pba,
+                                  *tau_run,
+                                  pba->short_info,
+                                  pba->inter_normal,
+                                  last_index,
+                                  pvecback),
+                                  pba->error_message,
+                                  ptr->error_message);
+      
+      integrand_omega_agwb[3*i_z] = z_run;
+      integrand_omega_agwb[3*i_z+1] = bbh_merger_rate_run*dE_df_e_dOmega_e_run/(pvecback[pba->index_bg_H]*(1+z_run));
+      integrand_omega_agwb[3*i_z+2] = 0;
+    }
+
+    class_call(array_integrate(integrand_omega_agwb,
+                              3,
+                              omega_agwb_step_count,
+                              0,
+                              1,
+                              2,
+                              ptr->error_message),
+                              ptr->error_message,
+                              ptr->error_message);
+
+    double omega_agwb = integrand_omega_agwb[3*omega_agwb_step_count+2]-integrand_omega_agwb[2];
+
+    double bbh_merger_rate;
+    class_call(transfer_bbh_merger_rate(
+                                        ppr,
+                                        pba,
+                                        ppm,
+                                        pnl,
+                                        ptr,
+                                        z,
+                                        bbh_merger_rate),
+                                        ptr->error_message,
+                                        ptr->error_message);
+    double dE_df_e_dOmega_e;
+    class_call(transfer_dE_df_e_dOmega_e(
+                                          pba,
+                                          ptr,
+                                          ptr->gw_frequency,
+                                          z,
+                                          30000, //in geometric units (meters)
+                                          30000,
+                                          dE_df_e_dOmega_e),
+                                          ptr->error_message,
+                                          ptr->error_message);
+
+    double * tau;
+    class_call(background_tau_of_z(pba,
+                                    z,
+                                    tau),
+                                    pba->error_message,
+                                    ptr->error_message);
+
+    double pvecback[pba->short_info];
+    int * last_index;
+
+    class_call(background_at_tau(pba,
+                                  *tau,
+                                  pba->short_info,
+                                  pba->inter_normal,
+                                  last_index,
+                                  pvecback),
+                                  pba->error_message,
+                                  ptr->error_message);
+
+    *selection = bbh_merger_rate*dE_df_e_dOmega_e/(pvecback[pba->index_bg_H]*(1+z)*omega_agwb);
 
     return _SUCCESS_;
   }
@@ -2633,7 +2768,7 @@ int transfer_dNdz_analytic(
  *
  * @param ptr          Input: pointer to transfer structure
  * @param z            Input: redshift
- * @param dNdz         Output: density per redshift, dN/dZ
+ * @param dNdz         Output: density per redshift, dN/dZ (tracer)
  * @param dln_dNdz_dz  Output: dln(dN/dz)/dz, used optionally for the source evolution
  * @return the error status
  */
@@ -2646,7 +2781,6 @@ int transfer_dln_dNdz_dz_analytic(
 
   double z0,alpha,beta;
 
-  
   if (tracer == 0) {
 	if (ptr->selection_tracer_1 == euclid_galaxy) {
 	  z0 = 0.54;
@@ -2697,7 +2831,263 @@ int transfer_dln_dNdz_dz_analytic(
   return _SUCCESS_;
 
 }
+/** Ajith et al. arXiv:0909.2867 */
+//all in geometric units
 
+int transfer_dE_df_e_dOmega_e(
+                    struct background * pba,
+                    struct transfers * ptr,
+                    double gw_frequency,
+                    double z,
+                    double m_1, //should be given in geometric units - meters
+                    double m_2,
+                    double dE_df_e_dOmega_e) {
+
+  // amplitude from Ajith et al., adapted by Bellomo et al. (arXiv:2110.15059)
+
+  //unit conversion
+
+  double gw_frequency_geom = gw_frequency/_c_;
+
+  double f_emitted = gw_frequency*(z+1); //in Hertz
+
+  double f_1 = 0.066;
+  double f_2 = 0.185;
+  double f_3 = 0.3236;
+  double sigma = 0.0925;
+  double epsilon_1 = -1.8897;
+  double epsilon_2 = 1.6557;
+  double alpha_2 = -323/224;
+  double nu = pow((_PI_*(m_1+m_2)*f_emitted), 1/3);
+  double omega_m = (1+alpha_2*pow(nu, 2))/(1+epsilon_1*nu+epsilon_2*pow(nu, 2));
+  double omega_r = _PI_*sigma*omega_m*pow(f_2/f_1, -2/3)*(1+epsilon_1*pow(nu,2)+epsilon_2*pow(nu, 2));
+  double psi_2 = 3715/756;
+  double psi_3 = -16*_PI_;
+  double psi_4 = 15293365/508032;
+
+  double m_chirp = pow(m_1*m_2, 3/5)*pow(m_1+m_2, 2/5);
+
+  //call background for luminosity distance
+  double * tau;
+
+  class_call(background_tau_of_z(pba,
+                                z,
+                                tau),
+                                pba->error_message,
+                                ptr->error_message);
+
+  double pvecback[pba->long_info];
+  int * last_index;
+
+  class_call(background_at_tau(pba,
+                              *tau,
+                              pba->long_info,
+                              pba->inter_normal,
+                              last_index,
+                              pvecback),
+                              pba->error_message,
+                              ptr->error_message);
+                              
+  //constant C_0
+
+  double c_0 = sqrt(5/24)*pow(_G_*m_chirp, 5/6)*pow(_PI_, -2/3)*pow(_c_, -3/2)*pow(z+1, 5/6)/pba->index_bg_lum_distance;
+  double c_e = c_0*pow(z+1, 7/6);
+
+  //piecewise defined amplitude
+
+  double a_1 = c_e*pow(f_emitted, -7/6)*(1+alpha_2*pow(nu, 2)); //for f<f_1
+  double a_2 = c_e*pow(f_1, -7/6)*omega_m*pow(f_emitted/f_1, -2/3)*(1+epsilon_1*nu+epsilon_2*pow(nu, 2)); //for f_1<f<f_2
+  double a_3 = c_e*pow(f_1, -7/6)*omega_r/(2*_PI_)*sigma/(pow(f_emitted-f_2, 2)+pow(sigma, 2)/4); //f_2<f<f_3
+
+  double h;
+
+  if (f_emitted < f_1){
+    h = pow(a_1, 2);
+  }
+  else{
+    if(f_emitted < f_2){
+      h = pow(a_2, 2);
+    }
+    else{
+      h = pow(a_3, 2);
+    }
+  }
+
+  dE_df_e_dOmega_e = _PI_*pow(pvecback[pba->index_bg_lum_distance], 2)*pow(_c_, 3)*pow(gw_frequency, 2)/(2*_G_*pow((1+z), 2))*pow(h, 2);
+
+  return _SUCCESS_;
+  }
+
+/* STAR FORMATION RATE CALCULATION 
+calculate the SFR using the best-fit from UniverseMachine: arXiv:1806.07893*/
+
+int transfer_star_formation_rate(
+                              struct background * pba,
+                              double z,
+                              double m_halo,
+                              double star_fr){
+    
+  double v_charac;      //characteristic SFR
+  double epsilon;       //chracteristic SFR
+  double alpha;         //faint-end slope
+  double beta;          //massive-end slope
+  double gamma;         //strength of Gaussian efficiency boost
+  double delta;         //width of Gaussian efficiency boost
+  double m_200;         //mass for v = 200 km/s
+  double v_mpeak;       //maximum velocity at z of peak historical halo mass
+
+  /*best-fit values from UniverseMachine*/
+
+  double v_0 = 2.151;
+  double v_a = -1.658;
+  double v_la = 1.68;
+  double v_z = -0.233;
+  v_charac = pow(10, v_0 + v_a*(1 - pba->a_today/(z + 1)) + v_la*(1 + z) + v_z*z);
+
+  double epsilon_0 = 0.109;
+  double epsilon_a = -3.441;
+  double epsilon_la = 5.079;
+  double epsilon_z = -0.781;
+  epsilon = pow(10, epsilon_0 + epsilon_a*(1 - pba->a_today/(z + 1)) + epsilon_la*(1 + z) + epsilon_z*z);
+
+  double alpha_0 = 0.109;
+  double alpha_a = -3.441;
+  double alpha_la = 5.079;
+  double alpha_z = -0.781;
+  alpha = alpha_0 + alpha_a*(1 - pba->a_today/(z + 1)) + alpha_la*(1 + z) + alpha_z*z;
+
+  double beta_0 = -1.911;
+  double beta_a = 0.395;
+  double beta_z = 0.747;
+  beta = beta_0 + beta_a*(1 - pba->a_today/(z + 1)) + beta_z*z;
+
+  double gamma_0 = -1.699;
+  double gamma_a = 4.206;
+  double gamma_z = -0.809;
+  beta = pow(10, beta_0 + beta_a*(1 - pba->a_today/(z + 1)) + beta_z*z);
+
+  m_200 = (1.64*pow(10,12)*_Msun_)/(pow((pba->a_today/(z + 1))/0.378, -0.142) + pow((pba->a_today/(z + 1))/0.378, -1.79));
+  v_mpeak = 200*pow((m_halo/m_200), 3);
+
+  delta = 0.055;
+
+  star_fr = epsilon*(1/(pow(v_mpeak/v_charac, alpha) + pow(v_mpeak/v_charac, beta))
+            + gamma*exp(-log10(pow(v_mpeak/v_charac, 2))/(2*pow(delta, 2))));
+
+  return _SUCCESS_;
+}
+
+int transfer_bbh_merger_rate(
+                            struct precision * ppr,
+                            struct background * pba,
+                            struct primordial * ppm,
+                            struct nonlinear * pnl,
+                            struct transfers * ptr,
+                            double z,
+                            double bbh_merger_rate) {
+
+  int i_m_halo;
+  double m_halo_min = pow(10, 10); //initial values in solar masses/h
+  double m_halo_max = pow(10, 16);
+  int step_count = 20; //how many claculated points for the spline for the integration
+  double m_halo;
+
+  double integrand_d_m_halo[3*step_count]; //integrand array for the M integration: SFR*HMF, 3 columns
+
+  //calculate HMF and SFR for different halo masses to integrate later
+
+  double rho_m;
+  double R; // in Mpc
+  double * M; // in Msun/h
+  double * sigma; //we declare a pointer to a double, which is called sigma
+  double * dsigma2_dR;
+  double * f;
+  double * dn_dM;
+  double * M2_over_rho_dn_dM;
+  double star_fr;
+
+  for(i_m_halo = 0; i_m_halo < step_count; i_m_halo++){
+
+    m_halo = pow(10, 10)*(i_m_halo/step_count)*(m_halo_max/m_halo_min);
+
+    rho_m = (pba->Omega0_b+pba->Omega0_cdm) * pba->H0 * pba->H0; // 8piG rho_m / (3c^2) in units of Mpc^-2
+    rho_m *= 3.*_c_*_c_/8./_PI_/_G_ *_Mpc_over_m_ / _Msun_ * pba->h; // rho_m in units of (Msun/h) / Mpc^3
+
+    class_call(nonlinear_halo_mass_function(ppr,
+                                            pba,
+                                            ppm,
+                                            pnl,
+                                            R, // in Mpc
+                                            0, //redshift z,
+                                            800, //overdensity Delta,
+                                            M, // in Msun/h
+                                            sigma,
+                                            dsigma2_dR,
+                                            f,
+                                            dn_dM,
+                                            M2_over_rho_dn_dM),
+                                            pnl->error_message,
+                                            ptr->error_message);
+
+    class_call(transfer_star_formation_rate(pba,
+                                            z,
+                                            m_halo,
+                                            star_fr),
+                                            ptr->error_message,
+                                            ptr->error_message);  
+
+    integrand_d_m_halo[3*i_m_halo] = i_m_halo;
+    integrand_d_m_halo[3*i_m_halo+1] = star_fr*(*dn_dM);
+    integrand_d_m_halo[3*i_m_halo+2] = 0;
+  }
+
+    class_call(array_integrate(integrand_d_m_halo,
+                              3, //columns
+                              step_count, //lines
+                              0, //column for x
+                              1, //column for y
+                              2, //integration output
+                              ptr->error_message),
+                              ptr->error_message,
+                              ptr->error_message);
+
+    double * tau;
+
+    class_call(background_tau_of_z(pba,
+                                  z,
+                                  tau),
+                                  pba->error_message,
+                                  ptr->error_message);
+
+    //integrate over SFR*HMF
+    int i_time_delay;
+    double t_d_min = 15.321; //in Mpc from 50 Myr
+    int t_step_count = 20;
+    double integrand_time_delay[3*t_step_count]; //integrand array for the t integration, 3 columns
+    //i belive in you
+    
+    for(i_time_delay=0; i_time_delay<t_step_count; i_time_delay++){
+      integrand_time_delay[3*i_time_delay+1] = log(*tau/t_d_min)/(t_d_min+i_time_delay/t_step_count*(*tau-t_d_min));
+    }
+
+    class_call(array_integrate(integrand_time_delay,
+                                3,
+                                t_step_count,
+                                0,
+                                1,
+                                2,
+                                ptr->error_message),
+                                ptr->error_message,
+                                ptr->error_message);
+
+    double time_delay_factor;
+    time_delay_factor = integrand_time_delay[2] - integrand_time_delay[3*(t_step_count-1)+2]; //2 is index for integrated fct.
+
+    bbh_merger_rate = time_delay_factor*(integrand_d_m_halo[3*(step_count-1)+2]-integrand_d_m_halo[2]);
+
+  return _SUCCESS_;
+  
+}
 /**
  * For sources that need to be multiplied by a selection function,
  * redefine a finer time sampling in a small range
@@ -2918,6 +3308,7 @@ int transfer_selection_times(
 
   /* lower edge of time interval for this bin */
   /* the few lines below should be consistent with their counterpart in input.c */
+
   if (ptr->selection_window == gaussian) {
     z = ptr->selection_mean[bin]+ptr->selection_width[bin]*ppr->selection_cut_at_sigma;
   }
@@ -2926,6 +3317,9 @@ int transfer_selection_times(
   }
   if (ptr->selection_window == dirac) {
     z = ptr->selection_mean[bin];
+  }
+  if (ptr->selection_window == gw_frequency_dep) {
+    z = ptr->selection_mean[bin]+ptr->selection_width[bin]*ppr->selection_cut_at_sigma;
   }
 
   class_call(background_tau_of_z(pba,
@@ -2937,13 +3331,16 @@ int transfer_selection_times(
   /* higher edge of time interval for this bin */
 
   if (ptr->selection_window == gaussian) {
-    z = MAX(ptr->selection_mean[bin]-ptr->selection_width[bin]*ppr->selection_cut_at_sigma,0.);
+    z = MAX(ptr->selection_mean[bin]-ptr->selection_width[bin]*ppr->selection_cut_at_sigma,0.); //use selection width from .ini
   }
   if (ptr->selection_window == tophat) {
     z = MAX(ptr->selection_mean[bin]-(1.+ppr->selection_cut_at_sigma*ppr->selection_tophat_edge)*ptr->selection_width[bin],0.);
   }
   if (ptr->selection_window == dirac) {
     z = ptr->selection_mean[bin];
+  }
+  if (ptr->selection_window == gw_frequency_dep) {
+    z = MAX(ptr->selection_mean[bin]-ptr->selection_width[bin]*ppr->selection_cut_at_sigma, 0.);
   }
 
   class_call(background_tau_of_z(pba,
@@ -2987,6 +3384,8 @@ int transfer_selection_compute(
                                struct precision * ppr,
                                struct background * pba,
                                struct perturbs * ppt,
+                               struct primordial * ppm,
+                               struct nonlinear * pnl,
                                struct transfers * ptr,
                                double * selection,
                                double * tau0_minus_tau,
@@ -3034,8 +3433,11 @@ int transfer_selection_compute(
       z = pba->a_today/pvecback[pba->index_bg_a]-1.;
 
       /* get corresponding dN/dz(z,bin) */
-      class_call(transfer_selection_function(ppr,
+      class_call(transfer_selection_function(pba,
+                                             ppr,
                                              ppt,
+                                             ppm,
+                                             pnl,
                                              ptr,
                                              bin,
                                              tracer,
@@ -4794,6 +5196,8 @@ int transfer_precompute_selection(
                      struct precision * ppr,
                      struct background * pba,
                      struct perturbs * ppt,
+                     struct primordial * ppm,
+                     struct nonlinear * pnl,
                      struct transfers * ptr,
                      double tau_rec,
                      int tau_size_max,
@@ -4918,6 +5322,8 @@ int transfer_precompute_selection(
       class_call(transfer_selection_compute(ppr,
                                             pba,
                                             ppt,
+                                            ppm,
+                                            pnl,
                                             ptr,
                                             selection,
                                             tau0_minus_tau,
@@ -5097,6 +5503,8 @@ int transfer_precompute_selection(
       class_call(transfer_selection_compute(ppr,
                                             pba,
                                             ppt,
+                                            ppm,
+                                            pnl,
                                             ptr,
                                             selection,
                                             tau0_minus_tau_lensing_sources,
@@ -5285,6 +5693,7 @@ int transfer_precompute_selection(
   return _SUCCESS_;
 }
 
+
 int transfer_dNdz(
 				  struct transfers * ptr,
                   double z,
@@ -5341,7 +5750,7 @@ int transfer_dNdz(
   
   }
   
-  *dNdz = temp_dNdz;
+  *dNdz = temp_dNdz; //assign the pointer dNdz a value
   
   return _SUCCESS_;				  
 }
@@ -5357,13 +5766,13 @@ int transfer_f_evo(
                   ){
   /* Allocate temporary variables for calculation of f_evo */
   double z;
-  double dln_dNdz_dz;
+  double dln_dNdz_dz; //variable definition without initialisation
   double temp_f_evo;
+  double f_scale;
 
   if ((ptr->has_nz_evo_file == _TRUE_) || (ptr->has_nz_evo_analytic == _TRUE_)){
 
-    temp_f_evo = 2./pvecback[pba->index_bg_H]/pvecback[pba->index_bg_a]*cotKgen
-      + pvecback[pba->index_bg_H_prime]/pvecback[pba->index_bg_H]/pvecback[pba->index_bg_H]/pvecback[pba->index_bg_a];
+    // temp_f_evo = ptr->gw_frequency; // test for now, will be overwritten below
 
     z = pba->a_today/pvecback[pba->index_bg_a]-1.;
 
@@ -5429,7 +5838,7 @@ int transfer_f_evo(
     temp_f_evo = 0.;
   }
 
-  *f_evo = temp_f_evo;
+  *f_evo = temp_f_evo; //f_evo is the pointer
 
   return _SUCCESS_;
 }

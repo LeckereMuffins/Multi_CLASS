@@ -1,0 +1,25 @@
+--- nonlinear.h
++++ nonlinear.h
+@@ -311,6 +311,22 @@
+                           double * result
+                           );
+ 
++  int nonlinear_halo_mass_function(
++                                 struct precision * ppr,
++                                 struct background * pba,
++                                 struct primordial * ppm,
++                                 struct nonlinear * pfo,
++                                 double R,
++                                 double z,
++                                 double Delta,
++                                 double * M,
++                                 double * sigma,
++                                 double * dsigma2_dR,
++                                 double * f,
++                                 double * dn_dM,
++                                 double * M2_over_rho_dn_dM
++                                 );
++
+   int fourier_pk_tilt_at_k_and_z(
+                                  struct background * pba,
+                                  struct primordial * ppm,

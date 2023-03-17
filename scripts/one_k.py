@@ -1,4 +1,5 @@
 
+#%%
 # coding: utf-8
 
 # In[ ]:
@@ -38,7 +39,7 @@ k = 0.5  # 1/Mpc
 common_settings = {# we need to set the output field to something although
                    # the really releveant outpout here will be set with 'k_output_values'
                    'output':'mPk',
-                   # value of k we want to polot in [1/Mpc]
+                   # value of k we want to plot in [1/Mpc]
                    'k_output_values':k,
                    # LambdaCDM parameters
                    'h':0.67556,
@@ -63,7 +64,7 @@ M.compute()
 # load perturbations
 #
 all_k = M.get_perturbations()  # this potentially constains scalars/tensors and all k values
-print all_k['scalar'][0].viewkeys()
+print(all_k['scalar'][0].keys())
 #
 one_k = all_k['scalar'][0]     # this contains only the scalar perturbations for the requested k values
 #
@@ -97,7 +98,8 @@ background_tau = background['conf. time [Mpc]'] # read confromal times in backgr
 background_z = background['z'] # read redshift
 background_k_over_aH = k/background['H [1/Mpc]']*(1.+background['z']) # read k/aH = k(1+z)/H
 background_k_rs = k * background['comov.snd.hrz.'] # read k * rs
-background_rho_m_over_r =    (background['(.)rho_b']+background['(.)rho_cdm'])    /(background['(.)rho_g']+background['(.)rho_ur']) # read rho_r / rho_m (to find time of equality)
+# read rho_r / rho_m (to find time of equality)
+background_rho_m_over_r =    (background['(.)rho_b']+background['(.)rho_cdm'])    /(background['(.)rho_g']+background['(.)rho_ur']) 
 #
 # define interpolation functions; we want the value of tau when the argument is equal to 2pi (or 1 for equality)
 #
@@ -169,5 +171,8 @@ plt.semilogx(tau,Theta0+psi,'c-',linewidth=2,label=r'$\Theta_0+\psi$')
 #
 plt.semilogx(tau,theta_b,'g-',label=r'$\theta_b$')
 plt.legend(loc='right',bbox_to_anchor=(1.4, 0.5))
-plt.savefig('one_k.pdf',bbox_inches='tight')
+# plt.savefig('one_k.pdf',bbox_inches='tight')
+plt.show()
 #
+
+# %%

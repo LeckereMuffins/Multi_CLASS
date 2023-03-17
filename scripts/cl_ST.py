@@ -152,7 +152,7 @@ plt.loglog(ellt,factort*clt['ee'],'b:',label=r'$\mathrm{EE(t)}$')
 plt.loglog(ellt,factort*clt['bb'],'g:',label=r'$\mathrm{BB(t)}$')
 plt.loglog(ell,factor*(cl_lensed['bb']-cl_tot['bb']),'g-',label=r'$\mathrm{BB(lensing)}$')
 plt.legend(loc='right',bbox_to_anchor=(1.4, 0.5))
-
+plt.plot()
 
 # In[ ]:
 

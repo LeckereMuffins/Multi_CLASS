@@ -2617,6 +2617,9 @@ int input_read_parameters(
 	  else if (strstr(string1,"dirac") != NULL) {
 		ptr->selection_window = dirac;
 	  }
+    else if (strstr(string1, "gw_frequency_dep") !=NULL) {
+    ptr->selection_window = gw_frequency_dep;
+    }
 	  else {
 		class_stop(errmsg,"In selection_window input: type '%s' is unclear.",string1);
 	  }
@@ -2677,6 +2680,17 @@ int input_read_parameters(
 		class_stop(errmsg, "No magnification bias has been provided.");
 	  }
 	}
+
+
+  class_call(parser_read_double(pfc,
+                    "gw_frequency",
+                    &(param1), //the address to double 1 (frequency)
+                    &(flag1),
+                    errmsg),
+          errmsg, errmsg);
+  if (flag1 == _TRUE_) {
+    ptr->gw_frequency = param1;
+  }
 	
 	class_call(parser_read_string(pfc,
 								  "selection_dNdz_1",
@@ -2830,6 +2844,9 @@ int input_read_parameters(
           }
           if (ptr->selection_window==dirac) {
             z_max = ptr->selection_mean[bin];
+          }
+          if (ptr->selection_window==gw_frequency_dep) {
+            z_max = ppt->z_max_pk;
           }
           ppt->z_max_pk = MAX(ppt->z_max_pk,z_max);
         }
@@ -3853,7 +3870,7 @@ int input_try_unknown_parameters(double * unknown_parameter,
     if (input_verbose>2)
       printf("Stage 6: transfer\n");
     tr.transfer_verbose = 0;
-    class_call_except(transfer_init(&pr,&ba,&th,&pt,&nl,&tr),
+    class_call_except(transfer_init(&pr,&ba,&th,&pt,&pm,&nl,&tr),
                       tr.error_message,
                       errmsg,
                       nonlinear_free(&nl);primordial_free(&pm);perturb_free(&pt);thermodynamics_free(&th);background_free(&ba)

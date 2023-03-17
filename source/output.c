@@ -509,7 +509,7 @@ int output_cl(
       by calling spectra_cl_at_l() and distribute the results to
       relevant files */
 
-  for (l = 2; l <= psp->l_max_tot; l++) {
+  for (l = 1; l <= psp->l_max_tot; l++) {
 
     class_call(spectra_cl_at_l(psp,(double)l,cl_tot,cl_md,cl_md_ic),
                psp->error_message,
@@ -1313,7 +1313,7 @@ int output_open_cl_file(
       fprintf(*clfile,"# %s (units: [microK]^2)\n",first_line);
     }
 
-    fprintf(*clfile,"# for l=2 to %d, i.e. number of multipoles equal to %d\n",lmax,lmax-1);
+    fprintf(*clfile,"# for l=1 to %d, i.e. number of multipoles equal to %d\n",lmax,lmax);
     fprintf(*clfile,"#\n");
 
     if (pop->output_format == class_format) {

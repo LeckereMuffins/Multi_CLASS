@@ -192,6 +192,15 @@ struct nonlinear {
   ErrorMsg error_message; 	/**< zone for writing error messages */
 
   //@}
+
+  /** @name - halo mass function */
+
+  //@{
+  
+  double halo_mass_fct;                     /**< halo mass function */
+
+  //@}
+
 };
 
 /**
@@ -326,6 +335,22 @@ extern "C" {
                           double z,
                           double * k_nl,
                           double * k_nl_cb
+                          );
+
+  int nonlinear_halo_mass_function(
+                          struct precision * ppr,
+                          struct background * pba,
+                          struct primordial * ppm,
+                          struct nonlinear * pnl,
+                          double R, // in Mpc
+                          double z,
+                          double Delta,
+                          double * M, // in Msun/h
+                          double * sigma,
+                          double * dsigma2_dR,
+                          double * f,
+                          double * dn_dM,
+                          double * M2_over_rho_dn_dM
                           );
 
   /* internal functions */

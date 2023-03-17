@@ -1470,7 +1470,7 @@ int array_integrate_all_spline(
     h = (array[(i+1)*n_columns+index_x]-array[i*n_columns+index_x]);
 
     *result +=
-      (array[i*n_columns+index_y]+array[(i+1)*n_columns+index_y])*h/2.+
+      (array[i*n_columns+index_y]+array[(i+1)*n_columns+index_y])*h/2.-
       (array[i*n_columns+index_ddy]+array[(i+1)*n_columns+index_ddy])*h*h*h/24.;
 
   }
@@ -1517,7 +1517,7 @@ int array_integrate_all_trapzd_or_spline(
     h = (array[(i+1)*n_columns+index_x]-array[i*n_columns+index_x]);
 
     *result +=
-      (array[i*n_columns+index_y]+array[(i+1)*n_columns+index_y])*h/2.+
+      (array[i*n_columns+index_y]+array[(i+1)*n_columns+index_y])*h/2.-
       (array[i*n_columns+index_ddy]+array[(i+1)*n_columns+index_ddy])*h*h*h/24.;
 
   }

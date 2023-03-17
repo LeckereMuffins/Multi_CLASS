@@ -49,7 +49,7 @@ M.set(common_settings)
 M.compute()
 derived = M.get_current_derived_parameters(['tau_rec','conformal_age'])
 thermo = M.get_thermodynamics()
-print thermo.viewkeys()
+print(thermo.keys())
 
 
 # In[ ]:
@@ -76,8 +76,8 @@ plt.axvline(x=4255.316282,color='k')
 # Print functions one by one, saving between each (for slides)
 #
 plt.semilogx(tau,g,'r',label=r'$\psi$')
-
+plt.plot()
 
 # In[ ]:
 
-plt.savefig('thermo.pdf',bbox_inches='tight')
+# plt.savefig('thermo.pdf',bbox_inches='tight')

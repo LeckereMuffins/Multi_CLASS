@@ -354,7 +354,7 @@ int parser_read_string(
 
   /* read parameter value. */
 
-  strcpy(*value,pfc->value[index]);
+  strcpy(*value,pfc->value[index]); //copies the string to where "value" points towards
 
   /* Set 'found' flag to true, as well as the flag
      associated with this parameter in the file_content structure */

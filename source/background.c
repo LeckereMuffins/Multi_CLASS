@@ -187,7 +187,7 @@ int background_at_tau(
 int background_tau_of_z(
                         struct background *pba,
                         double z,
-                        double * tau
+                        double * tau //in Mpc
                         ) {
 
   /** Summary: */

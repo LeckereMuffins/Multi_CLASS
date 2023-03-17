@@ -38,8 +38,8 @@ CDM.compute()
 # Just to cross-check that Omega_Lambda is negligible
 # (but not exactly zero because we neglected radiation)
 derived = CDM.get_current_derived_parameters(['Omega0_lambda'])
-print derived
-print "Omega_Lambda =",derived['Omega0_lambda']
+print(derived)
+print("Omega_Lambda =",derived['Omega0_lambda'])
 
 
 # In[ ]:
@@ -47,7 +47,7 @@ print "Omega_Lambda =",derived['Omega0_lambda']
 #Get background quantities and recover their names:
 baLCDM = LCDM.get_background()
 baCDM = CDM.get_background()
-baCDM.viewkeys()
+baCDM.keys()
 
 
 # In[ ]:
@@ -74,6 +74,7 @@ plt.ylim([0.08, 20])
 plt.xlabel(r"$z$")
 plt.ylabel(r"$\mathrm{Distance}\times H_0$")
 plt.tight_layout()
+plt.show()
 
 
 # In[ ]:

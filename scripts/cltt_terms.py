@@ -104,7 +104,7 @@ plt.semilogx(ell,factor*cl_tot['tt'],'r-',label=r'$\mathrm{total}$')
 plt.semilogx(ell,factor*cl_lensed['tt'],'k-',label=r'$\mathrm{lensed}$')
 #
 plt.legend(loc='right',bbox_to_anchor=(1.4, 0.5))
-
+plt.show()
 
 # In[ ]:
 

@@ -1036,6 +1036,134 @@ int nonlinear_sigmas_at_z(
 }
 
 /**
+ * Output the Halo mass function as well as some related quantitites,
+ * for a given radius R, redshift z and halo overdensity
+ * Delta
+ *
+ * @param pba   Input: pointer to background structure
+ * @param ppm   Input: pointer to primordial structure
+ * @param pnl   Input: pointer to nonlinear structure
+ * @param R     Input: radius, Mpc
+ * @param z     Input: redshift, dimensionless
+ * @param Delta Input: overdensity defining halo population, dimensionless
+ * @param M                 Output: mass associated to R, Msun/h
+ * @param sigma             Output: sigma(R,z), dimensionless
+ * @param dsigma2_dR        Output: d sigma^2 / dR, 1/Mpc
+ * @param f                 Output: differential mass function f(R,z), dimensionless
+ * @param dn_dM             Output: halo mass function (dn/dM), (h/Msun)/(Mpc/h)**3, i.e. h^4/Msun/Mpc^3
+ * @param M2_over_rho_dn_dM Output: dimensionless quantity (M^2/rho_m)*(dn/dM)
+*/
+
+int nonlinear_halo_mass_function(
+                               struct precision * ppr,
+                               struct background * pba,
+                               struct primordial * ppm,
+                               struct nonlinear * pnl,
+                               double R, // in Mpc
+                               double z,
+                               double Delta,
+                               double * M, // in Msun/h
+                               double * sigma,
+                               double * dsigma2_dR,
+                               double * f,
+                               double * dn_dM,
+                               double * M2_over_rho_dn_dM
+                               ) {
+  double rho_m;
+  double logDelta;
+  double dsigma_dR;
+  enum out_sigmas sigma_output;
+
+  // Tinker 2008 coefficients
+  double Amp;
+  double a;
+  double b;
+  double c;
+  double alpha;
+
+  /**
+      We first need the relation between M and R given by
+      M = rho_m * 4/3 pi R^3
+      Subtlety: Here R is implicitely assumed to be a comoving scale...
+      So we should in fact write
+      M = rho_m(z) * 4/3 pi (R*(1+z))^3
+      But since rho_m scales like (1+z)^-3, we can just write this as
+      M = rho_m(z=0) * 4/3 pi (R)^3
+      The fact that rho_m must be evaluated at z=0 is often not mentioned explicitely in the literature.
+  */
+
+  rho_m = (pba->Omega0_b+pba->Omega0_cdm) * pba->H0 * pba->H0; // 8piG rho_m / (3c^2) in units of Mpc^-2
+
+  rho_m *= 3.*_c_*_c_/8./_PI_/_G_ *_Mpc_over_m_ / _Msun_ * pba->h; // rho_m in units of (Msun/h) / Mpc^3
+
+  *M = (rho_m * 4./3.*_PI_*R*R*R); // M in units of (Msun/h)
+
+  sigma_output = out_sigma;
+  class_call(nonlinear_sigmas_at_z(ppr,
+                                   pba, 
+                                   pnl, 
+                                   R, 
+                                   z, 
+                                   pnl->index_pk_m,
+                                   sigma_output, 
+                                   sigma),
+             ppm->error_message,
+             ppm->error_message);
+
+  sigma_output = out_sigma_prime;
+  class_call(nonlinear_sigmas_at_z(ppr, pba, pnl, R, z, pnl->index_pk_m,
+                                 sigma_output, &dsigma_dR),
+             ppm->error_message,
+             ppm->error_message);
+  *dsigma2_dR = 2 * *sigma * dsigma_dR;
+
+  /* differential mass function */
+
+  /* - Press Schechter */
+  /*
+  *f = sqrt(2./_PI_)*1.69/ *sigma *exp(-1.69*1.69/2./ *sigma/ *sigma);
+  */
+
+  /* - Tinker et al. 2008 for Delta = 200, z=0 */
+
+  // Amp=0.186;
+  // b=2.57;
+  // a=1.47;
+  // c=1.19;
+
+  /* - Tinker et al. 2008 for any Delta>=200 and z>=0 (approximate interpolation formulas; for higher precision use the spline they provide) */
+
+  logDelta = log(Delta)/log(10.);
+  alpha = pow(10.,-pow(0.75/log(Delta/75.)*log(10.),1.2));
+  Amp=(0.1*logDelta-0.05)*pow(1.+z,-0.14);
+  a = 1.43 + pow(logDelta -2.3, 1.5)*pow(1.+z,-0.06);
+  b = 1.0  + pow(logDelta -1.6,-1.5)*pow(1.+z,-alpha);
+  c = 1.2;
+  if (logDelta>2.35) c += pow(logDelta-2.35, 1.6);
+
+  *f = Amp*(pow(*sigma/b,-a)+1.)*exp(-c / *sigma / *sigma);
+
+  /**
+      Halo mass function.
+      The usual definition:  dn/dM = (rho_m/M) f(sigma) (d ln sigma^-1 / dM)
+      is equivalent to: dn/dM = -1/2 (rho_m/M) f(sigma) sigma^-2 (dR/dM) (d sigma^2 / dR)
+      Using M = rho_m * 4/3 pi R^3 thnis finally gives:
+      dn/dM = -3/(32 pi^2 R^5 rho_m) f(sigma) sigma^-2 (d sigma^2 / dR)
+  */
+
+  *dn_dM = -3./32./_PI_/_PI_/R/R/R/R/R/rho_m/ *sigma / *sigma * *f * *dsigma2_dR /pba->h/pba->h/pba->h; // dn/dM in units of (h/Msun)/(Mpc/h)**3, i.e. h^4/Msun/Mpc^3
+  
+  pnl->halo_mass_fct = *dn_dM;
+  /**
+      Dimensionless halo mass function: (M^2/rho_m)*(dn/dM) = -1/6 R f(sigma) sigma^-2 (d sigma^2 / dR)
+  */
+
+  *M2_over_rho_dn_dM = -1./6.*R/ *sigma / *sigma * *f * *dsigma2_dR; // (M^2/rho_m)*(dn/dM) : dimensionless
+
+  return _SUCCESS_;
+}
+
+/**
  * Return the value of the non-linearity wavenumber k_nl for a given redshift z
  *
  * @param pba     Input: pointer to background structure
@@ -3997,12 +4125,12 @@ int nonlinear_hmcode_growint(
 }
 
 /**
- * This is the fourier transform of the NFW density profile.
+ * This is the fourier transform of the NFW (Navarro-Frenk_White) density profile.
  *
  * @param pnl Input: pointer to nonlinear structure
  * @param k   Input: wave vector
  * @param rv  Input: virial radius
- * @param c   Input: concentration = rv/rs (with scale radius rs)
+ * @param c   Input: concentration = rv/rs (w. scale radius rs)
  * @param window_nfw Output: Window Function of the NFW profile
  * @return the error status
  */

@@ -5,7 +5,6 @@
 
 # import necessary modules
 # uncomment to get plots displayed in notebook
-# uncomment to get plots displayed in notebook
 #%matplotlib inline
 import matplotlib
 import matplotlib.pyplot as plt
@@ -45,8 +44,7 @@ tau_label_kd = 230.    # value of time at which we want to place the label on da
 #
 # Cosmological parameters and other CLASS parameters
 #
-common_settings = {# which output? transfer functions only
-                   'output':'mTk',
+common_settings = {'output':'mTk', # output: transfer functions only
                    # LambdaCDM parameters
                    'h':0.67556,
                    'omega_b':0.022032,
@@ -80,7 +78,7 @@ M.compute()
 # define conformal time sampling array
 #
 times = M.get_current_derived_parameters(['tau_rec','conformal_age'])
-tau_rec=times['tau_rec']
+tau_rec = times['tau_rec']
 tau_0 = times['conformal_age']
 tau1 = np.logspace(math.log10(tau_ini),math.log10(tau_rec),tau_num_early)
 tau2 = np.logspace(math.log10(tau_rec),math.log10(tau_0),tau_num_late)[1:]
@@ -101,7 +99,8 @@ background_tau = background['conf. time [Mpc]'] # read conformal times in backgr
 background_z = background['z'] # read redshift
 background_aH = 2.*math.pi*background['H [1/Mpc]']/(1.+background['z'])/M.h() # read 2pi * aH in [h/Mpc]
 background_ks = 2.*math.pi/background['comov.snd.hrz.']/M.h() # read 2pi/(comoving sound horizon) in [h/Mpc]
-background_rho_m_over_r =    (background['(.)rho_b']+background['(.)rho_cdm'])    /(background['(.)rho_g']+background['(.)rho_ur']) # read rho_r / rho_m (to find time of equality)
+# read rho_r / rho_m (to find time of equality)
+background_rho_m_over_r =    (background['(.)rho_b']+background['(.)rho_cdm'])    /(background['(.)rho_g']+background['(.)rho_ur'])
 background_rho_l_over_m =    background['(.)rho_lambda']    /(background['(.)rho_b']+background['(.)rho_cdm']) # read rho_m / rho_lambda (to find time of equality)
 thermodynamics_tau = thermodynamics['conf. time [Mpc]'] # read confromal times in thermodynamics table
 thermodynamics_kd = 2.*math.pi/thermodynamics['r_d']/M.h() # read 2pi(comoving diffusion scale) in [h/Mpc]
@@ -129,10 +128,10 @@ tau_lambda = background_tau_at_lm(1.)
 # check and inform user whether intiial arbitrary choice of z_max_pk was OK
 max_z_needed = background_z_at_tau(tau[0])
 if max_z_needed > z_max_pk:
-    print 'you must increase the value of z_max_pk to at least ',max_z_needed
+    print('you must increase the value of z_max_pk to at least ',max_z_needed)
     () + 1  # this strange line is just a trick to stop the script execution there
 else:
-    print 'in a next run with the same values of tau, you may decrease z_max_pk from ',z_max_pk,' to ',max_z_needed
+    print('in a next run with the same values of tau, you may decrease z_max_pk from ',z_max_pk,' to ',max_z_needed)
 #
 # get transfer functions at each time and build arrays Theta0(tau,k) and phi(tau,k)
 #
@@ -157,7 +156,7 @@ K,T = np.meshgrid(k,tau)
 #
 # inform user of the size of the grids (related to the figure resolution)
 #
-print 'grid size:',len(k),len(tau),Theta0.shape
+print('grid size:',len(k),len(tau),Theta0.shape)
 #
 #################
 #
@@ -170,9 +169,9 @@ fig = plt.figure(figsize=(18,8))
 # plot Theta0(k,tau)
 #
 ax_Theta = fig.add_subplot(121)
-print '> Plotting Theta_0'
+print('> Plotting Theta_0')
 fig_Theta = ax_Theta.pcolormesh(K,T,Theta0,cmap='coolwarm',vmin=-Theta_amp, vmax=Theta_amp) #,shading='gouraud')
-print '> Done'
+print('> Done')
 #
 # plot lines (characteristic times and scales)
 #
@@ -220,9 +219,9 @@ fig.colorbar(fig_Theta)
 ax_phi = fig.add_subplot(122)
 ax_phi.set_xlim(k[0],k[-1])
 #ax_phi.pcolor(K,T,phi,cmap='coolwarm')
-print '> Plotting phi'
+print('> Plotting phi')
 fig_phi = ax_phi.pcolormesh(K,T,phi,cmap='coolwarm',vmin=-0., vmax=phi_amp)
-print '> Done'
+print('> Done')
 #
 # plot lines (characteristic times and scales)
 #
@@ -261,5 +260,7 @@ fig.colorbar(fig_phi)
 #
 # produce the PDF
 #
-#plt.show()
-plt.savefig('many_times.png',dpi=300)
+plt.show()
+# plt.savefig('many_times.png',dpi=300)
+
+# %%

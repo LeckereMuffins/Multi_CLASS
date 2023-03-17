@@ -18,7 +18,7 @@ enum tracer_type {euclid_galaxy, spherex_galaxy, astrophysical_gws};
  * List of possible types of selection function for number count or cosmic shear.
  * */
 
-enum selection_type {gaussian,tophat,dirac};
+enum selection_type {gaussian,tophat,dirac, gw_frequency_dep};
 
 
 /* macro: test if index_tt is in the range between index and index+num, while the flag is true */
@@ -134,11 +134,13 @@ struct transfers {
   
   double * selection_mean;               /**< redshift bin mean */
   double * selection_width;              /**< redshift bin width */
-  enum selection_type selection_window;  /**< type of selection functions */
+  enum selection_type selection_window;  /**< type of selection functions */ // 0 gaussian, 1 tophat, 2 dirac, 3 gw_frequency_dep
   
   double * selection_bias;               /**< light-to-mass bias in the transfer function of density number count */
   double * selection_magnification_bias; /**< magnification bias in the transfer function of density number count */
   
+  double gw_frequency;                   /**< gravitational wave frequency -> for f_evo & window */
+
   short has_nz_analytic;                 /**< Use analytic form for dN/dz (selection function) distribution? */
   short has_nz_evo_analytic;             /**< Use analytic form for dN/dz (evolution function) distribution? */
   enum tracer_type selection_tracer_1;   /**< first tracer */
@@ -375,6 +377,7 @@ extern "C" {
                     struct background * pba,
                     struct thermo * pth,
                     struct perturbs * ppt,
+                    struct primordial * ppm,
                     struct nonlinear * pnl,
                     struct transfers * ptr
                     );
@@ -486,6 +489,8 @@ extern "C" {
                                   struct precision * ppr,
                                   struct background * pba,
                                   struct perturbs * ppt,
+                                  struct primordial * ppm,
+                                  struct nonlinear * pnl,
                                   struct transfers * ptr,
                                   int ** tp_of_tt,
                                   int index_q,
@@ -521,6 +526,8 @@ extern "C" {
                        struct precision * ppr,
                        struct background * pba,
                        struct perturbs * ppt,
+                       struct primordial * ppm,
+                       struct nonlinear * pnl,
                        struct transfers * ptr,
                        double * interpolated_sources,
                        double tau_rec,
@@ -537,8 +544,11 @@ extern "C" {
                        );
 
   int transfer_selection_function(
+                                  struct background * pba,
                                   struct precision * ppr,
                                   struct perturbs * ppt,
+                                  struct primordial * ppm,
+                                  struct nonlinear * pnl,
                                   struct transfers * ptr,
                                   int bin,
                                   int tracer,
@@ -556,6 +566,30 @@ extern "C" {
                                     double z,
                                     int tracer,
                                     double * dln_dNdz_dz);
+
+  int transfer_dE_df_e_dOmega_e(
+                                struct background * pba,
+                                struct transfers * ptr,
+                                double gw_frequency,
+                                double z,
+                                double m_1,
+                                double m_2,
+                                double dE_df_e_dOmega_e);
+
+  int transfer_star_formation_rate(
+                                  struct background * pba,
+                                  double z,
+                                  double m_halo,
+                                  double star_fr);
+
+  int transfer_bbh_merger_rate(
+                              struct precision * ppr,
+                              struct background * pba,
+                              struct primordial * ppm,
+                              struct nonlinear * pnl,
+                              struct transfers * ptr,
+                              double z,
+                              double bbh_merger_rate);
 
   int transfer_selection_sampling(
                                   struct precision * ppr,
@@ -599,18 +633,20 @@ extern "C" {
                                double * tau_max);
 
   int transfer_selection_compute(
-                                 struct precision * ppr,
-                                 struct background * pba,
-                                 struct perturbs * ppt,
-                                 struct transfers * ptr,
-                                 double * selection,
-                                 double * tau0_minus_tau,
-                                 double * delta_tau,
-                                 int tau_size,
-                                 double * pvecback,
-                                 double tau0,
-                                 int bin,
-                                 int tracer);
+                               struct precision * ppr,
+                               struct background * pba,
+                               struct perturbs * ppt,
+                               struct primordial * ppm,
+                               struct nonlinear * pnl,
+                               struct transfers * ptr,
+                               double * selection,
+                               double * tau0_minus_tau,
+                               double * w_trapz,
+                               int tau_size,
+                               double * pvecback,
+                               double tau0,
+                               int bin,
+                               int tracer);
 
   int transfer_compute_for_each_l(
                                   struct transfer_workspace * ptw,
@@ -784,6 +820,8 @@ extern "C" {
                      struct precision * ppr,
                      struct background * pba,
                      struct perturbs * ppt,
+                     struct primordial * ppm,
+                     struct nonlinear * pnl,
                      struct transfers * ptr,
                      double tau_rec,
                      int tau_size_max,

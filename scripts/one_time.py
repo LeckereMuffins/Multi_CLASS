@@ -56,7 +56,7 @@ M.compute()
 derived = M.get_current_derived_parameters(['z_rec','tau_rec','conformal_age'])
 #print derived.viewkeys()
 z_rec = derived['z_rec']
-z_rec = int(1000.*z_rec)/1000. # round down at 4 digits after coma
+z_rec = int(1000.*z_rec)/1000. # round down at 4 digits after comma
 M.struct_cleanup()  # clean output
 M.empty()           # clean input
 #
@@ -70,7 +70,7 @@ M.compute()
 # load transfer functions at recombination
 #
 one_time = M.get_transfer(z_rec)
-print one_time.viewkeys()
+print(one_time.keys())
 k = one_time['k (h/Mpc)']
 Theta0 = 0.25*one_time['d_g']
 phi = one_time['phi']
@@ -199,7 +199,7 @@ cl = M.raw_cl(5000)
 ax_Cl.semilogx(cl['ell']/tau_0_minus_tau_rec_hMpc,1.e10*cl['ell']*(cl['ell']+1.)*cl['tt']/2./math.pi,'c-',label=r'$\mathrm{T+SW}$')
 #
 ax_Cl.legend(loc='right',bbox_to_anchor=(1.4, 0.5))
-fig.savefig('one_time_with_cl_1.pdf',bbox_inches='tight')
+# fig.savefig('one_time_with_cl_1.pdf',bbox_inches='tight')
 #
 # call CLASS with early ISW, plot; call CLASS with late ISW, plot; then save
 #
@@ -222,7 +222,8 @@ cl = M.raw_cl(5000)
 ax_Cl.semilogx(cl['ell']/tau_0_minus_tau_rec_hMpc,1.e10*cl['ell']*(cl['ell']+1.)*cl['tt']/2./math.pi,'y-',label=r'$\mathrm{late} \,\, \mathrm{ISW}$')
 #
 ax_Cl.legend(loc='right',bbox_to_anchor=(1.4, 0.5))
-fig.savefig('one_time_with_cl_2.pdf',bbox_inches='tight')
+# fig.savefig('one_time_with_cl_2.pdf',bbox_inches='tight')
+
 #
 # call CLASS with Doppler, then plot and save
 #
@@ -236,11 +237,14 @@ cl = M.raw_cl(5000)
 ax_Cl.semilogx(cl['ell']/tau_0_minus_tau_rec_hMpc,1.e10*cl['ell']*(cl['ell']+1.)*cl['tt']/2./math.pi,'g-',label=r'$\mathrm{Doppler}$')
 #
 ax_Cl.legend(loc='right',bbox_to_anchor=(1.4, 0.5))
-fig.savefig('one_time_with_cl_3.pdf',bbox_inches='tight')
+# fig.savefig('one_time_with_cl_3.pdf',bbox_inches='tight')
+
 #
 # plot the total Cls that had been stored, and save
 #
 ax_Cl.semilogx(cl_tot['ell']/tau_0_minus_tau_rec_hMpc,1.e10*cl_tot['ell']*(cl_tot['ell']+1.)*cl_tot['tt']/2./math.pi,'k-',label=r'$\mathrm{Total}$')
 #
 ax_Cl.legend(loc='right',bbox_to_anchor=(1.4, 0.5))
-fig.savefig('one_time_with_cl_tot.pdf',bbox_inches='tight')
+# fig.savefig('one_time_with_cl_tot.pdf',bbox_inches='tight')
+
+# %%

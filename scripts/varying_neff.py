@@ -37,7 +37,7 @@ var_figname = 'neff'
 # i.e. such that omega_ur = omega_gamma * coeff * Neff:
 # coeff = omega_ur/omega_gamma/Neff_standard
 coeff = 1.710730e-05/2.472979e-05/3.046
-print "coeff=",coeff
+print("coeff=",coeff)
 #
 #############################################
 #
@@ -69,7 +69,7 @@ for i, N_ur in enumerate(var_array):
     alpha = (1.+coeff*N_ur)/(1.+coeff*3.046)
     omega_cdm = (0.022032 + 0.12038)*alpha - 0.022032
     h = 0.67556*math.sqrt(alpha)
-    print ' * Compute with %s=%e, %s=%e, %s=%e'%('N_ur',N_ur,'omega_cdm',omega_cdm,'h',h)
+    print(' * Compute with %s=%e, %s=%e, %s=%e'%('N_ur',N_ur,'omega_cdm',omega_cdm,'h',h))
     #
     # call CLASS
     #

@@ -73,7 +73,7 @@ fig_PP, ax_PP = plt.subplots()
 #
 for i,var in enumerate(var_array):
     #
-    print ' * Compute with %s=%e'%(var_name,var)
+    print(' * Compute with %s=%e'%(var_name,var))
     #
     # deal with colors and legends
     #
@@ -164,11 +164,5 @@ ax_PP.set_ylabel(r'$[\ell^2(\ell+1)^2/2\pi]  C_\ell^\mathrm{\phi \phi}$')
 ax_PP.legend(legarray)
 fig_PP.tight_layout()
 fig_PP.savefig('spectra_%s_clpp.pdf' % var_figname)
-
-
-# In[ ]:
-
-
-
 
 # In[ ]:
