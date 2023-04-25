@@ -1096,9 +1096,10 @@ int nonlinear_halo_mass_function(
 
   rho_m *= 3.*_c_*_c_/8./_PI_/_G_ *_Mpc_over_m_ / _Msun_ * pba->h; // rho_m in units of (Msun/h) / Mpc^3
 
-  *M = (rho_m * 4./3.*_PI_*R*R*R); // M in units of (Msun/h)
+  *M = (rho_m*4./3.*_PI_*pow(R, 3)); // M in units of (Msun/h)
 
   sigma_output = out_sigma;
+
   class_call(nonlinear_sigmas_at_z(ppr,
                                    pba, 
                                    pnl, 
@@ -1115,6 +1116,7 @@ int nonlinear_halo_mass_function(
                                  sigma_output, &dsigma_dR),
              ppm->error_message,
              ppm->error_message);
+ 
   *dsigma2_dR = 2 * *sigma * dsigma_dR;
 
   /* differential mass function */

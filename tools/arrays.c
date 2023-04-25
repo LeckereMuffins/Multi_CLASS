@@ -1525,9 +1525,7 @@ int array_integrate_all_trapzd_or_spline(
   return _SUCCESS_;
 }
 
- /**
- * Not called.
- */
+
 int array_integrate(
 		   double * array,
 		   int n_columns,
@@ -1697,8 +1695,9 @@ int array_interpolate_spline(
   int inf,sup,mid,i;
   double h,a,b;
 
-  inf=0;
-  sup=n_lines-1;
+  inf = 0;
+
+  sup = n_lines-1;
 
   if (x_array[inf] < x_array[sup]){
 
@@ -1743,7 +1742,8 @@ int array_interpolate_spline(
     }
 
   }
-
+  //printf("inf %f\n", inf);
+  //printf("last index %f\n", *last_index);
   *last_index = inf;
 
   h = x_array[sup] - x_array[inf];

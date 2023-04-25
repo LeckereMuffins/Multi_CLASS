@@ -104,6 +104,7 @@ int thermodynamics_at_z(
                         double * pvecthermo
                         ) {
 
+
   /** Summary: */
 
   /** - define local variables */
@@ -329,6 +330,7 @@ int thermodynamics_init(
   int n, N_sub_steps;
   double dz_sub_step;
 
+  //printf("conformal age in thermo %d\n", pba->conformal_age);
   if (pth->thermodynamics_verbose > 0)
     printf("Computing thermodynamics");
 
@@ -1296,7 +1298,6 @@ int thermodynamics_init(
 int thermodynamics_free(
                         struct thermo * pth
                         ) {
-
   free(pth->z_table);
   free(pth->thermodynamics_table);
   free(pth->d2thermodynamics_dz2_table);

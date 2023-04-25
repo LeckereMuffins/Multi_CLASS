@@ -206,6 +206,8 @@ int background_tau_of_z(
              pba->error_message,
              "out of range: a=%e > a_max=%e\n",z,pba->z_table[0]);
 
+  //printf("last index in background %f\n", last_index); //undefined behaviour
+
   /** - interpolate from pre-computed table with array_interpolate() */
   class_call(array_interpolate_spline(
                                       pba->z_table,
@@ -810,7 +812,6 @@ int background_free_noinput(
 int background_free_input(
                           struct background *pba
                           ) {
-
   int k;
 
   if (pba->Omega0_ncdm_tot != 0.){

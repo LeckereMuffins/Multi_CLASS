@@ -1865,6 +1865,7 @@ int perturb_get_k_list(
               ppt->md_size*sizeof(double*),
               ppt->error_message);
 
+
   class_calloc(k_max_cmb,
                ppt->md_size,
                sizeof(double),
@@ -1877,7 +1878,7 @@ int perturb_get_k_list(
   /** - scalar modes */
 
   if (ppt->has_scalars == _TRUE_) {
-
+    
     /* first value */
     if (pba->sgnK == 0) {
       /* K<0 (flat)  : start close to zero */
@@ -1938,7 +1939,8 @@ int perturb_get_k_list(
                    ppt->error_message);
 
         k_max_cl[ppt->index_md_scalars] = MAX(k_max_cl[ppt->index_md_scalars],ppr->k_max_tau0_over_l_max*ppt->l_lss_max/(pba->conformal_age-tau1)); // to be very accurate we should use angular diameter distance to given redshift instead of comoving radius: would implement corrections depending on curvature
-        k_max    = k_max_cl[ppt->index_md_scalars];
+        k_max = k_max_cl[ppt->index_md_scalars];
+        
       }
     }
 
@@ -1981,7 +1983,7 @@ int perturb_get_k_list(
                   *sizeof(double),ppt->error_message);
     }
 
-    else{
+    else {
       class_alloc(ppt->k[ppt->index_md_scalars],
                   ((int)((k_max_cmb[ppt->index_md_scalars]-k_min)/k_rec/MIN(ppr->k_step_super,ppr->k_step_sub))+
                    (int)(MAX(ppr->k_per_decade_for_pk,ppr->k_per_decade_for_bao)*log(k_max/k_min)/log(10.))+3)

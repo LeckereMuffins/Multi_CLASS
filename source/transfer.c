@@ -1758,7 +1758,11 @@ int transfer_compute_for_each_q(
 
   /** - loop over all modes. For each mode */
 
+  //printf("ptr mode size %d \n", ptr->md_size); //1
+
   for (index_md = 0; index_md < ptr->md_size; index_md++) {
+
+    //printf("index_md %d\n", index_md);
 
     /* if we reached q_max for this mode, there is nothing to be done */
 
@@ -1945,7 +1949,10 @@ int transfer_compute_for_each_q(
       }
     }
 
-  } /* end of loop over mode */
+  }
+  //printf("loop over mode in compute for each q/k done \n");
+
+   /* end of loop over mode */
 
   return _SUCCESS_;
 
@@ -2114,6 +2121,8 @@ int transfer_sources(
                      double * w_trapz,
                      int * tau_size_out
                      )  {
+
+  //printf("start transfer sources \n");
 
   /** Summary: */
 
@@ -2486,7 +2495,7 @@ int transfer_selection_function(
                                 double * selection) {
 
   double x;
-  double dNdz; //definition without initialisation
+  double dNdz;
   int last_index;
 
   /* trivial dirac case */
@@ -2522,6 +2531,8 @@ int transfer_selection_function(
                ptr->error_message);
     
     *selection *= dNdz; //multiplication
+
+    printf("window fct. (gaussian) %f\n", *selection);
 
     return _SUCCESS_;
   }
@@ -2562,15 +2573,15 @@ int transfer_selection_function(
   if (ptr->selection_window == gw_frequency_dep) {
 
     //using arXiv:2206.02747, window function from equation 2.5
-    //neglect factors of omega_agwb, bc. they cancel out in the window fct.
+    //neglect factors in omega_agwb, bc. they cancel out in the window fct.
 
-    int omega_agwb_step_count = 50;
-    double integrand_omega_agwb[3*omega_agwb_step_count]; 
+    int omega_z_step_count = 5;
+    double integrand_omega_agwb[3*omega_z_step_count]; 
     int i_z;
 
-    for(i_z=0; i_z<omega_agwb_step_count; i_z++){
+    for(i_z = 0; i_z < omega_z_step_count; i_z = i_z+1){
 
-      double z_run = i_z/omega_agwb_step_count*5; //maximum redshift of 5
+      double z_run = i_z/omega_z_step_count*5; //maximum redshift of 5
       double bbh_merger_rate_run;
       class_call(transfer_bbh_merger_rate(
                                         ppr,
@@ -2582,8 +2593,9 @@ int transfer_selection_function(
                                         bbh_merger_rate_run),
                                         ptr->error_message,
                                         ptr->error_message);
-
+      
       double dE_df_e_dOmega_e_run;
+
       class_call(transfer_dE_df_e_dOmega_e(
                                           pba,
                                           ptr,
@@ -2595,20 +2607,21 @@ int transfer_selection_function(
                                           ptr->error_message,
                                           ptr->error_message);
 
-      double * tau_run;
+      double tau_run;
       class_call(background_tau_of_z(pba,
                                     z,
-                                    tau_run),
+                                    &tau_run),
                                     pba->error_message,
                                     ptr->error_message);
 
       double pvecback[pba->short_info];
-      int * last_index;
+      int last_index;
+
       class_call(background_at_tau(pba,
-                                  *tau_run,
+                                  tau_run,
                                   pba->short_info,
                                   pba->inter_normal,
-                                  last_index,
+                                  &last_index,
                                   pvecback),
                                   pba->error_message,
                                   ptr->error_message);
@@ -2616,11 +2629,13 @@ int transfer_selection_function(
       integrand_omega_agwb[3*i_z] = z_run;
       integrand_omega_agwb[3*i_z+1] = bbh_merger_rate_run*dE_df_e_dOmega_e_run/(pvecback[pba->index_bg_H]*(1+z_run));
       integrand_omega_agwb[3*i_z+2] = 0;
+
     }
 
+    //integrate over z for Omega_AGWB (equation 2.1)
     class_call(array_integrate(integrand_omega_agwb,
                               3,
-                              omega_agwb_step_count,
+                              omega_z_step_count,
                               0,
                               1,
                               2,
@@ -2628,7 +2643,9 @@ int transfer_selection_function(
                               ptr->error_message,
                               ptr->error_message);
 
-    double omega_agwb = integrand_omega_agwb[3*omega_agwb_step_count+2]-integrand_omega_agwb[2];
+    double omega_agwb = integrand_omega_agwb[3*omega_z_step_count+2]-integrand_omega_agwb[2];
+
+    printf("omega agwb %f\n", omega_agwb);
 
     double bbh_merger_rate;
     class_call(transfer_bbh_merger_rate(
@@ -2641,6 +2658,9 @@ int transfer_selection_function(
                                         bbh_merger_rate),
                                         ptr->error_message,
                                         ptr->error_message);
+
+    printf("bbh merger rate %f\n", bbh_merger_rate);
+
     double dE_df_e_dOmega_e;
     class_call(transfer_dE_df_e_dOmega_e(
                                           pba,
@@ -2653,26 +2673,43 @@ int transfer_selection_function(
                                           ptr->error_message,
                                           ptr->error_message);
 
-    double * tau;
+    printf("energy spectrum %f\n", dE_df_e_dOmega_e);
+
+    double tau;
     class_call(background_tau_of_z(pba,
                                     z,
-                                    tau),
+                                    &tau),
                                     pba->error_message,
                                     ptr->error_message);
 
     double pvecback[pba->short_info];
-    int * last_index;
+    int last_index;
 
     class_call(background_at_tau(pba,
-                                  *tau,
+                                  tau,
                                   pba->short_info,
                                   pba->inter_normal,
-                                  last_index,
+                                  &last_index,
                                   pvecback),
                                   pba->error_message,
                                   ptr->error_message);
 
     *selection = bbh_merger_rate*dE_df_e_dOmega_e/(pvecback[pba->index_bg_H]*(1+z)*omega_agwb);
+
+    printf("window fct. without dNdz %f\n", *selection);
+
+    class_call(transfer_dNdz(ptr,
+						                z,
+						                tracer, 
+						                last_index, 
+						                &dNdz
+						                ),
+              ptr->error_message,
+              ptr->error_message);
+    
+    //*selection *= dNdz;
+
+    //printf("window fct. with dNdz %f\n", *selection);
 
     return _SUCCESS_;
   }
@@ -2710,7 +2747,6 @@ int transfer_dNdz_analytic(
      different functions for dN/dz and dln(dN/dz)/dz */
 
   double z0,alpha,beta;
-
   
   if (tracer == 0) {
 	if (ptr->selection_tracer_1 == euclid_galaxy) {
@@ -2868,22 +2904,23 @@ int transfer_dE_df_e_dOmega_e(
   double m_chirp = pow(m_1*m_2, 3/5)*pow(m_1+m_2, 2/5);
 
   //call background for luminosity distance
-  double * tau;
+
+  double tau;
 
   class_call(background_tau_of_z(pba,
                                 z,
-                                tau),
+                                &tau),
                                 pba->error_message,
                                 ptr->error_message);
 
   double pvecback[pba->long_info];
-  int * last_index;
+  int last_index;
 
   class_call(background_at_tau(pba,
-                              *tau,
+                              tau,
                               pba->long_info,
                               pba->inter_normal,
-                              last_index,
+                              &last_index,
                               pvecback),
                               pba->error_message,
                               ptr->error_message);
@@ -2988,8 +3025,8 @@ int transfer_bbh_merger_rate(
 
   int i_m_halo;
   double m_halo_min = pow(10, 10); //initial values in solar masses/h
-  double m_halo_max = pow(10, 16);
-  int step_count = 20; //how many claculated points for the spline for the integration
+  double m_halo_max = pow(10, 15);
+  int step_count = 5; //how many claculated points for the spline for the integration
   double m_halo;
 
   double integrand_d_m_halo[3*step_count]; //integrand array for the M integration: SFR*HMF, 3 columns
@@ -2998,34 +3035,41 @@ int transfer_bbh_merger_rate(
 
   double rho_m;
   double R; // in Mpc
-  double * M; // in Msun/h
-  double * sigma; //we declare a pointer to a double, which is called sigma
-  double * dsigma2_dR;
-  double * f;
-  double * dn_dM;
-  double * M2_over_rho_dn_dM;
+  double M; // in Msun/h
+  double sigma; 
+  double dsigma2_dR;
+  double f;
+  double dn_dM;
+  double M2_over_rho_dn_dM;
   double star_fr;
 
   for(i_m_halo = 0; i_m_halo < step_count; i_m_halo++){
 
-    m_halo = pow(10, 10)*(i_m_halo/step_count)*(m_halo_max/m_halo_min);
+    //printf("transfer HMF halo mass loop index %d\n", i_m_halo);
+    double loop_progress = (double)(i_m_halo+1)/(double)(step_count+1);
+    //printf("transfer HMF i_m_halo+1/step_count+1 %f\n", loop_progress);
+    m_halo = m_halo_min*pow(m_halo_max/m_halo_min, loop_progress);
+    //printf("in transfer for HMF halo mass %f\n", m_halo);
 
     rho_m = (pba->Omega0_b+pba->Omega0_cdm) * pba->H0 * pba->H0; // 8piG rho_m / (3c^2) in units of Mpc^-2
     rho_m *= 3.*_c_*_c_/8./_PI_/_G_ *_Mpc_over_m_ / _Msun_ * pba->h; // rho_m in units of (Msun/h) / Mpc^3
+    //printf("in transfer for HMF rho mass %f\n", rho_m);
+    R = pow(3*m_halo/(4*_PI_*rho_m), 1./3.);
+    //printf("in transfer for HMF radius %f\n", R);
 
     class_call(nonlinear_halo_mass_function(ppr,
                                             pba,
                                             ppm,
                                             pnl,
                                             R, // in Mpc
-                                            0, //redshift z,
+                                            0.1, //redshift z,
                                             800, //overdensity Delta,
-                                            M, // in Msun/h
-                                            sigma,
-                                            dsigma2_dR,
-                                            f,
-                                            dn_dM,
-                                            M2_over_rho_dn_dM),
+                                            &M, // in Msun/h
+                                            &sigma,
+                                            &dsigma2_dR,
+                                            &f,
+                                            &dn_dM,
+                                            &M2_over_rho_dn_dM),
                                             pnl->error_message,
                                             ptr->error_message);
 
@@ -3037,7 +3081,7 @@ int transfer_bbh_merger_rate(
                                             ptr->error_message);  
 
     integrand_d_m_halo[3*i_m_halo] = i_m_halo;
-    integrand_d_m_halo[3*i_m_halo+1] = star_fr*(*dn_dM);
+    integrand_d_m_halo[3*i_m_halo+1] = star_fr*(dn_dM);
     integrand_d_m_halo[3*i_m_halo+2] = 0;
   }
 
@@ -3051,23 +3095,23 @@ int transfer_bbh_merger_rate(
                               ptr->error_message,
                               ptr->error_message);
 
-    double * tau;
+    double tau;
 
     class_call(background_tau_of_z(pba,
                                   z,
-                                  tau),
+                                  &tau),
                                   pba->error_message,
                                   ptr->error_message);
 
     //integrate over SFR*HMF
     int i_time_delay;
     double t_d_min = 15.321; //in Mpc from 50 Myr
-    int t_step_count = 20;
+    int t_step_count = 5;
     double integrand_time_delay[3*t_step_count]; //integrand array for the t integration, 3 columns
     //i belive in you
-    
+  
     for(i_time_delay=0; i_time_delay<t_step_count; i_time_delay++){
-      integrand_time_delay[3*i_time_delay+1] = log(*tau/t_d_min)/(t_d_min+i_time_delay/t_step_count*(*tau-t_d_min));
+      integrand_time_delay[3*i_time_delay+1] = log(tau/t_d_min)/(t_d_min+i_time_delay/t_step_count*(tau-t_d_min));
     }
 
     class_call(array_integrate(integrand_time_delay,
@@ -3413,8 +3457,15 @@ int transfer_selection_compute(
 
   if (tau_size > 1) {
 
+    //printf("tau size %d\n", tau_size); //180
+
+    FILE *fpt;
+    fpt = fopen("window_fct_of_z.csv", "w+");
+
     /* loop over time */
-    for (index_tau = 0; index_tau < tau_size; index_tau++) {
+    for (index_tau = 0; index_tau < tau_size; index_tau++) { //after debugging change back to tau_size
+
+      //printf("index tau %d\n", index_tau);
 
       /* running value of time */
       tau = tau0 - tau0_minus_tau[index_tau];
@@ -3446,10 +3497,15 @@ int transfer_selection_compute(
                  ptr->error_message,
                  ptr->error_message);
 
+      printf("window fct %f\n", selection[index_tau]);
+      fprintf(fpt, "%f\n", selection[index_tau]);
+
       /* get corresponding dN/dtau = dN/dz * dz/dtau = dN/dz * H */
       selection[index_tau] *= pvecback[pba->index_bg_H];
 
     }
+
+    printf("done with csv file \n");
 
     /* compute norm = \int W(tau) dtau */
     class_call(array_trapezoidal_integral(selection,
@@ -3473,7 +3529,9 @@ int transfer_selection_compute(
     selection[0] = 1.;
   }
 
-  return _SUCCESS_;
+  printf("planned error due to _FAILURE_\n");
+
+  return _FAILURE_;
 }
 
 /**
@@ -5273,8 +5331,13 @@ int transfer_precompute_selection(
   /* conformal time today */
   tau0 = pba->conformal_age;
 
+
+  //printf("index max %d \n", ptr->tt_size[index_md]); //10
+
   /* Loop through different types to be precomputed */
   for (index_tt = 0; index_tt < ptr->tt_size[index_md]; index_tt++) {
+
+    //printf("index %d \n", index_tt);
 
     /* First set the corresponding tau size */
     class_call(transfer_source_tau_size(ppr,
@@ -5454,6 +5517,7 @@ int transfer_precompute_selection(
 		  (*window_2)[index_tt*tau_size_max+index_tau] = rescaling;
 		}
       }
+
     }
     /* End non-integrated contribution */
 
@@ -5683,6 +5747,7 @@ int transfer_precompute_selection(
     }
     /* End integrated contribution */
   }
+  //printf("time loop in precompute selection done\n");
 
   /* deallocate temporary arrays */
   free(selection);
