@@ -1525,6 +1525,7 @@ int array_integrate_all_trapzd_or_spline(
   return _SUCCESS_;
 }
 
+/** not used **/
 
 int array_integrate(
 		   double * array,

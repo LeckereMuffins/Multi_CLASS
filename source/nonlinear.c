@@ -1081,21 +1081,19 @@ int nonlinear_halo_mass_function(
   double c;
   double alpha;
 
-  /**
-      We first need the relation between M and R given by
+  /*  We first need the relation between M and R given by
       M = rho_m * 4/3 pi R^3
       Subtlety: Here R is implicitely assumed to be a comoving scale...
       So we should in fact write
       M = rho_m(z) * 4/3 pi (R*(1+z))^3
       But since rho_m scales like (1+z)^-3, we can just write this as
       M = rho_m(z=0) * 4/3 pi (R)^3
-      The fact that rho_m must be evaluated at z=0 is often not mentioned explicitely in the literature.
-  */
-
+      The fact that rho_m must be evaluated at z=0 is often not mentioned explicitely in the literature.*/
+  
+  //printf("R %.6e\n", R);
   rho_m = (pba->Omega0_b+pba->Omega0_cdm) * pba->H0 * pba->H0; // 8piG rho_m / (3c^2) in units of Mpc^-2
-
   rho_m *= 3.*_c_*_c_/8./_PI_/_G_ *_Mpc_over_m_ / _Msun_ * pba->h; // rho_m in units of (Msun/h) / Mpc^3
-
+  //printf("rho_m %.6e\n", rho_m);
   *M = (rho_m*4./3.*_PI_*pow(R, 3)); // M in units of (Msun/h)
 
   sigma_output = out_sigma;
@@ -1108,31 +1106,26 @@ int nonlinear_halo_mass_function(
                                    pnl->index_pk_m,
                                    sigma_output, 
                                    sigma),
-             ppm->error_message,
-             ppm->error_message);
+             pnl->error_message,
+             pnl->error_message);
 
   sigma_output = out_sigma_prime;
   class_call(nonlinear_sigmas_at_z(ppr, pba, pnl, R, z, pnl->index_pk_m,
                                  sigma_output, &dsigma_dR),
-             ppm->error_message,
-             ppm->error_message);
+             pnl->error_message,
+             pnl->error_message);
  
   *dsigma2_dR = 2 * *sigma * dsigma_dR;
+  //printf("dsigma2_dR %.6e \n", *dsigma2_dR);
 
   /* differential mass function */
-
-  /* - Press Schechter */
-  /*
-  *f = sqrt(2./_PI_)*1.69/ *sigma *exp(-1.69*1.69/2./ *sigma/ *sigma);
-  */
-
+  /* - Press Schechter
+  // *f = sqrt(2./_PI_)*1.69/ *sigma *exp(-1.69*1.69/2./ *sigma/ *sigma);
   /* - Tinker et al. 2008 for Delta = 200, z=0 */
-
   // Amp=0.186;
   // b=2.57;
   // a=1.47;
   // c=1.19;
-
   /* - Tinker et al. 2008 for any Delta>=200 and z>=0 (approximate interpolation formulas; for higher precision use the spline they provide) */
 
   logDelta = log(Delta)/log(10.);
@@ -1141,24 +1134,26 @@ int nonlinear_halo_mass_function(
   a = 1.43 + pow(logDelta -2.3, 1.5)*pow(1.+z,-0.06);
   b = 1.0  + pow(logDelta -1.6,-1.5)*pow(1.+z,-alpha);
   c = 1.2;
-  if (logDelta>2.35) c += pow(logDelta-2.35, 1.6);
+  if (logDelta>2.35){
+    c += pow(logDelta-2.35, 1.6);
+  }
 
   *f = Amp*(pow(*sigma/b,-a)+1.)*exp(-c / *sigma / *sigma);
+  //printf("PS function %.6e \n", *f);
 
-  /**
-      Halo mass function.
-      The usual definition:  dn/dM = (rho_m/M) f(sigma) (d ln sigma^-1 / dM)
+  /* Halo mass function. The usual definition:  dn/dM = (rho_m/M) f(sigma) (d ln sigma^-1 / dM)
       is equivalent to: dn/dM = -1/2 (rho_m/M) f(sigma) sigma^-2 (dR/dM) (d sigma^2 / dR)
       Using M = rho_m * 4/3 pi R^3 thnis finally gives:
-      dn/dM = -3/(32 pi^2 R^5 rho_m) f(sigma) sigma^-2 (d sigma^2 / dR)
-  */
+      dn/dM = -3/(32 pi^2 R^5 rho_m) f(sigma) sigma^-2 (d sigma^2 / dR) */
 
   *dn_dM = -3./32./_PI_/_PI_/R/R/R/R/R/rho_m/ *sigma / *sigma * *f * *dsigma2_dR /pba->h/pba->h/pba->h; // dn/dM in units of (h/Msun)/(Mpc/h)**3, i.e. h^4/Msun/Mpc^3
+  //convert HMF to 1/(Msun*Mpc^3)
+  //*dn_dM *= pow(pba->h, 4);
+  //printf("HMF %.6e\n", *dn_dM);
   
   pnl->halo_mass_fct = *dn_dM;
-  /**
-      Dimensionless halo mass function: (M^2/rho_m)*(dn/dM) = -1/6 R f(sigma) sigma^-2 (d sigma^2 / dR)
-  */
+  
+  // Dimensionless halo mass function: (M^2/rho_m)*(dn/dM) = -1/6 R f(sigma) sigma^-2 (d sigma^2 / dR)
 
   *M2_over_rho_dn_dM = -1./6.*R/ *sigma / *sigma * *f * *dsigma2_dR; // (M^2/rho_m)*(dn/dM) : dimensionless
 
@@ -2476,7 +2471,7 @@ int nonlinear_sigmas(
              pnl->error_message,
              pnl->error_message);
 
-  /** - preperly normalize the final result */
+  /** - properly normalize the final result */
 
   switch (sigma_output) {
 

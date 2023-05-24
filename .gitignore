@@ -17,3 +17,4 @@ doc/manual/latex
 .vscode/
 recycling/
 jobscript.sh
+*.csv

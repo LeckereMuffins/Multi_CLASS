@@ -570,17 +570,17 @@ extern "C" {
   int transfer_dE_df_e_dOmega_e(
                                 struct background * pba,
                                 struct transfers * ptr,
-                                double gw_frequency,
-                                double z,
+                                double f_0,
+                                const double z,
                                 double m_1,
                                 double m_2,
-                                double dE_df_e_dOmega_e);
+                                double * dE_df_e_dOmega_e);
 
   int transfer_star_formation_rate(
                                   struct background * pba,
                                   double z,
                                   double m_halo,
-                                  double star_fr);
+                                  double * star_fr);
 
   int transfer_bbh_merger_rate(
                               struct precision * ppr,
@@ -589,7 +589,7 @@ extern "C" {
                               struct nonlinear * pnl,
                               struct transfers * ptr,
                               double z,
-                              double bbh_merger_rate);
+                              double * bbh_merger_rate);
 
   int transfer_selection_sampling(
                                   struct precision * ppr,
