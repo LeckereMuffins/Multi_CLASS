@@ -340,7 +340,6 @@ extern "C" {
   int nonlinear_halo_mass_function(
                           struct precision * ppr,
                           struct background * pba,
-                          struct primordial * ppm,
                           struct nonlinear * pnl,
                           double R, // in Mpc
                           double z,

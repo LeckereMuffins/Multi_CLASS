@@ -13,6 +13,7 @@
 /**
  * Boilerplate for C++
  */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -74,8 +75,6 @@ extern "C" {
 		   int index_dydx,
 		   int index_ddydxdx,
 		   ErrorMsg errmsg);
-
-
 
   int array_spline(
 		   double * array,

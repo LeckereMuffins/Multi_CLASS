@@ -1695,9 +1695,7 @@ int array_interpolate_spline(
 
   int inf,sup,mid,i;
   double h,a,b;
-
   inf = 0;
-
   sup = n_lines-1;
 
   if (x_array[inf] < x_array[sup]){
@@ -1719,7 +1717,6 @@ int array_interpolate_spline(
       else {inf=mid;}
 
     }
-
   }
 
   else {

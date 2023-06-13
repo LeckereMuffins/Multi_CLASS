@@ -1057,7 +1057,6 @@ int nonlinear_sigmas_at_z(
 int nonlinear_halo_mass_function(
                                struct precision * ppr,
                                struct background * pba,
-                               struct primordial * ppm,
                                struct nonlinear * pnl,
                                double R, // in Mpc
                                double z,
@@ -1110,8 +1109,15 @@ int nonlinear_halo_mass_function(
              pnl->error_message);
 
   sigma_output = out_sigma_prime;
-  class_call(nonlinear_sigmas_at_z(ppr, pba, pnl, R, z, pnl->index_pk_m,
-                                 sigma_output, &dsigma_dR),
+  class_call(nonlinear_sigmas_at_z(
+                                  ppr, 
+                                  pba, 
+                                  pnl, 
+                                  R, 
+                                  z, 
+                                  pnl->index_pk_m,
+                                  sigma_output, 
+                                  &dsigma_dR),
              pnl->error_message,
              pnl->error_message);
  
@@ -1148,9 +1154,7 @@ int nonlinear_halo_mass_function(
 
   *dn_dM = -3./32./_PI_/_PI_/R/R/R/R/R/rho_m/ *sigma / *sigma * *f * *dsigma2_dR /pba->h/pba->h/pba->h; // dn/dM in units of (h/Msun)/(Mpc/h)**3, i.e. h^4/Msun/Mpc^3
   //convert HMF to 1/(Msun*Mpc^3)
-  //*dn_dM *= pow(pba->h, 4);
-  //printf("HMF %.6e\n", *dn_dM);
-  
+  *dn_dM *= pow(pba->h, 4);  
   pnl->halo_mass_fct = *dn_dM;
   
   // Dimensionless halo mass function: (M^2/rho_m)*(dn/dM) = -1/6 R f(sigma) sigma^-2 (d sigma^2 / dR)

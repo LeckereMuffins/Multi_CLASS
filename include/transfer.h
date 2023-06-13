@@ -139,7 +139,7 @@ struct transfers {
   double * selection_bias;               /**< light-to-mass bias in the transfer function of density number count */
   double * selection_magnification_bias; /**< magnification bias in the transfer function of density number count */
   
-  double gw_frequency;                   /**< gravitational wave frequency -> for f_evo & window */
+  double gw_frequency;                   /**< gravitational wave frequency -> for f_evo & window function */
 
   short has_nz_analytic;                 /**< Use analytic form for dN/dz (selection function) distribution? */
   short has_nz_evo_analytic;             /**< Use analytic form for dN/dz (evolution function) distribution? */
@@ -562,6 +562,9 @@ extern "C" {
                              double * dNdz);
                              
   int transfer_dln_dNdz_dz_analytic(
+                                    struct precision * ppr,
+                                    struct background * pba,
+                                    struct nonlinear * pnl,
                                     struct transfers * ptr,
                                     double z,
                                     int tracer,
@@ -582,10 +585,16 @@ extern "C" {
                                   double m_halo,
                                   double * star_fr);
 
+  int transfer_bbh_merger_rate_0(
+                              struct precision * ppr,
+                              struct background * pba,
+                              struct nonlinear * pnl,
+                              struct transfers * ptr,
+                              double * bbh_merger_rate);
+
   int transfer_bbh_merger_rate(
                               struct precision * ppr,
                               struct background * pba,
-                              struct primordial * ppm,
                               struct nonlinear * pnl,
                               struct transfers * ptr,
                               double z,
@@ -838,7 +847,9 @@ extern "C" {
                  );
   
   int transfer_f_evo(
-                   struct background* pba,
+                    struct precision * ppr,
+                   struct background * pba,
+                   struct nonlinear * pnl,
                    struct transfers * ptr,
                    double* pvecback,
                    int last_index,

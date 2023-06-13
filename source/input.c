@@ -2681,7 +2681,6 @@ int input_read_parameters(
 	  }
 	}
 
-
   class_call(parser_read_double(pfc,
                     "gw_frequency",
                     &(param1), //the address to double 1 (frequency)
