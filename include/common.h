@@ -7,6 +7,8 @@
 #include "float.h"
 #include "svnversion.h"
 #include <stdarg.h>
+#include <error.h>
+#include <errno.h>
 
 #ifdef _OPENMP
 #include "omp.h"

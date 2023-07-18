@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "lensing.h"
+#include <time.h>
 
 /**
  * Maximum number of values of redshift at which the spectra will be

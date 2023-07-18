@@ -167,11 +167,11 @@ class_precision_parameter(k_step_super,double,0.002) /**< step in k space, in un
 class_precision_parameter(k_step_transition,double,0.2) /**< dimensionless number regulating the transition from 'sub' steps to 'super' steps. Decrease for more precision. */
 class_precision_parameter(k_step_super_reduction,double,0.1) /**< the step k_step_super is reduced by this amount in the k-->0 limit (below scale of Hubble and/or curvature radius) */
 
-class_precision_parameter(k_per_decade_for_pk,double,10.0) /**< if values needed between kmax inferred from k_oscillations and k_kmax_for_pk, this gives the number of k per decade outside the BAO region*/
+class_precision_parameter(k_per_decade_for_pk,double,10) /**< if values needed between kmax inferred from k_oscillations and k_kmax_for_pk, this gives the number of k per decade outside the BAO region*/
 
 class_precision_parameter(idmdr_boost_k_per_decade_for_pk,double,1.0) /**< boost factor for the case of DAO in idm-idr models */
 
-class_precision_parameter(k_per_decade_for_bao,double,70.0) /**< if values needed between kmax inferred from k_oscillations and k_kmax_for_pk, this gives the number of k per decade inside the BAO region (for finer sampling)*/
+class_precision_parameter(k_per_decade_for_bao,double,70) /**< if values needed between kmax inferred from k_oscillations and k_kmax_for_pk, this gives the number of k per decade inside the BAO region (for finer sampling)*/
 
 class_precision_parameter(k_bao_center,double,3.0) /**< in ln(k) space, the central value of the BAO region where sampling is finer is defined as k_rec times this number (recommended: 3, i.e. finest sampling near 3rd BAO peak) */
 
@@ -222,7 +222,7 @@ class_precision_parameter(gw_ini,double,1.0)      /**< initial condition for ten
 /**
  * default step \f$ d \tau \f$ in perturbation integration, in units of the timescale involved in the equations (usually, the min of \f$ 1/k \f$, \f$ 1/aH \f$, \f$ 1/\dot{\kappa} \f$)
  */
-class_precision_parameter(perturb_integration_stepsize,double,0.5)
+class_precision_parameter(perturb_integration_stepsize,double,2)
 
 /**
  * default step \f$ d \tau \f$ for sampling the source function, in units of the timescale involved in the sources: \f$ (\dot{\kappa}- \ddot{\kappa}/\dot{\kappa})^{-1} \f$

@@ -873,8 +873,7 @@ int array_logspline_table_lines(
 int array_spline_table_columns(
 		       double * x, /* vector of size x_size */
 		       int x_size,
-		       double * y_array, /* array of size x_size*y_size with elements
-					  y_array[index_y*x_size+index_x] */
+		       double * y_array, /* array of size x_size*y_size with elements y_array[index_y*x_size+index_x] */
 		       int y_size,
 		       double * ddy_array, /* array of size x_size*y_size */
 		       short spline_mode,

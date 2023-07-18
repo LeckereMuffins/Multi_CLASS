@@ -220,7 +220,12 @@ int transfer_init(
   /** - initialize all indices in the transfers structure and
       allocate all its arrays using transfer_indices_of_transfers() */
 
-  class_call(transfer_indices_of_transfers(ppr,ppt,ptr,q_period,pba->K,pba->sgnK),
+  class_call(transfer_indices_of_transfers(ppr,
+                                          ppt,
+                                          ptr,
+                                          q_period,
+                                          pba->K,
+                                          pba->sgnK),
              ptr->error_message,
              ptr->error_message);
 
@@ -258,9 +263,15 @@ int transfer_init(
       sources: needs to be known here, in order to allocate a large
       enough workspace */
 
-  class_call(transfer_source_tau_size_max(ppr,pba,ppt,ptr,tau_rec,tau0,&tau_size_max),
-             ptr->error_message,
-             ptr->error_message);
+  class_call(transfer_source_tau_size_max(ppr,
+                                          pba,
+                                          ppt,
+                                          ptr,
+                                          tau_rec,
+                                          tau0,
+                                          &tau_size_max),
+                                          ptr->error_message,
+                                          ptr->error_message);
 
   /** - compute flat spherical bessel functions */
 
@@ -2531,7 +2542,7 @@ int transfer_selection_function(
     
     *selection *= dNdz; //multiplication
 
-    printf("window fct. (gaussian) %f\n", *selection);
+    //printf("window fct. (gaussian) %f\n", *selection);
 
     return _SUCCESS_;
   }
@@ -2574,7 +2585,7 @@ int transfer_selection_function(
     //using arXiv:2206.02747, window function from equation 2.5
     //neglect factors in omega_agwb, bc. they cancel out in the window fct.
 
-    const int omega_z_step_count = 10;
+    const int omega_z_step_count = 5;
     double integrand_omega_agwb[3*omega_z_step_count]; 
     int i_z;
     double z_run;
@@ -2583,11 +2594,6 @@ int transfer_selection_function(
     double tau_run;
     double pvecback[pba->bg_size_short];
     int last_index;
-
-    //FILE *fpt;
-    //fpt = fopen("dE_df_of_f.csv", "w+");
-    FILE *fpt2;
-    fpt2 = fopen("BBH_merger_rate.csv", "w+");
 
     double z_max = 5;
 
@@ -2620,9 +2626,8 @@ int transfer_selection_function(
                                         ptr->error_message,
                                         ptr->error_message);
 
-      //printf("bbh merger rate %.6e\n", bbh_merger_rate_run);
-      //fprintf(fpt2, "%.6e\n", z_run);
-      //fprintf(fpt2, "%.6e\n", bbh_merger_rate_run);
+      //convert from Mpc^(-3)yr^(-1) to Mpc^(-4)
+      bbh_merger_rate_run *= 3.26*pow(10, 6);
       
       class_call(transfer_dE_df_e_dOmega_e(
                                           pba,
@@ -2634,16 +2639,28 @@ int transfer_selection_function(
                                           &dE_df_e_dOmega_e_run),
                                           ptr->error_message,
                                           ptr->error_message);
+
+      double dE_df_e_dOmega_e_run_cgs = dE_df_e_dOmega_e_run*9.61*pow(10, 44); // from Mpc^2 to m^2
+      dE_df_e_dOmega_e_run_cgs *= _c_*_c_*_c_/_G_; //to SI units for the csv file
+      dE_df_e_dOmega_e_run_cgs *= pow(10, 7); //to convert to Gauss units -> erg/Hz
+
+      //fprintf(fpt_E_z, "%.6e\n", z_run);
+      //fprintf(fpt_E_z, "%.6e\n", dE_df_e_dOmega_e_run_cgs);
       
       integrand_omega_agwb[3*i_z] = z_run;
+      //printf("integrand_omega_agwb %.6e\n", bbh_merger_rate_run*dE_df_e_dOmega_e_run/(pvecback[pba->index_bg_H]*(1+z_run)));
       integrand_omega_agwb[3*i_z+1] = bbh_merger_rate_run*dE_df_e_dOmega_e_run/(pvecback[pba->index_bg_H]*(1+z_run));
-      integrand_omega_agwb[3*i_z+2] = 0;
+      integrand_omega_agwb[3*i_z+2] = 0; //for clarity
     }
 
-    //printf("planned error due to _FAILURE_ to stop after writing spectrum & rate csv files \n");
+    //printf("planned error due to _FAILURE_ to stop after writing spectrum csv file\n");
     //return _FAILURE_;
 
     //integrate over z for Omega_AGWB (equation 2.1)
+
+    FILE *fpt_omega;
+    fpt_omega = fopen("Omega_AGWB.csv", "w+");
+
     class_call(array_integrate(integrand_omega_agwb,
                               3,
                               omega_z_step_count,
@@ -2653,8 +2670,12 @@ int transfer_selection_function(
                               ptr->error_message),
                               ptr->error_message,
                               ptr->error_message);
+
     //plug in integration limits
-    double omega_agwb = integrand_omega_agwb[3*omega_z_step_count+2]-integrand_omega_agwb[2];
+    double omega_agwb = integrand_omega_agwb[3*(omega_z_step_count-1)+2]-integrand_omega_agwb[2];
+    //printf("upper bound %.6e\n", integrand_omega_agwb[3*(omega_z_step_count-1)+2]);
+    //printf("lower bound %.6e\n", integrand_omega_agwb[2]);
+    //printf("Omega AGWB %.6e\n", omega_agwb);
 
     double bbh_merger_rate;
     class_call(transfer_bbh_merger_rate(
@@ -2666,8 +2687,10 @@ int transfer_selection_function(
                                         &bbh_merger_rate),
                                         ptr->error_message,
                                         ptr->error_message);
+    //convert from Mpc^(-3)yr^(-1) to Mpc^(-4)
+    bbh_merger_rate *= 3.26*pow(10, 6);
 
-    printf("bbh merger rate %f\n", bbh_merger_rate);
+    //printf("bbh merger rate %.6e\n", bbh_merger_rate);
 
     double dE_df_e_dOmega_e;
     class_call(transfer_dE_df_e_dOmega_e(
@@ -2681,7 +2704,7 @@ int transfer_selection_function(
                                           ptr->error_message,
                                           ptr->error_message);
 
-    //printf("energy spectrum %f\n", dE_df_e_dOmega_e);
+    //printf("energy spectrum %.6e\n", dE_df_e_dOmega_e);
 
     double tau;
     class_call(background_tau_of_z(pba,
@@ -2701,7 +2724,7 @@ int transfer_selection_function(
 
     *selection = bbh_merger_rate*dE_df_e_dOmega_e/(pvecback[pba->index_bg_H]*(1+z)*omega_agwb);
 
-    printf("window fct. without dNdz %f\n", *selection);
+    //printf("window fct. without dNdz %.6e\n", *selection);
 
     class_call(transfer_dNdz(ptr,
 						                z,
@@ -2714,7 +2737,7 @@ int transfer_selection_function(
     
     *selection *= dNdz;
 
-    printf("window fct. with dNdz %f\n", *selection);
+    //printf("window fct. with dNdz %.6e\n", *selection);
 
     return _SUCCESS_;
   }
@@ -2839,115 +2862,144 @@ int transfer_dln_dNdz_dz_analytic(
       *dln_dNdz_dz = (alpha - pow(z/z0,beta)*beta)/z;
 	}
 	else if (ptr->selection_tracer_1 == astrophysical_gws) {
+
+    if (ptr->selection_window == gw_frequency_dep) {
+    //if (0 == 1) {
       
-    const int f_evo_step_count = 5;
-    double product_f_evo[3*f_evo_step_count];
-    int i_z;
-    double bbh_merger_rate_run;
-    double dE_df_e_dOmega_e_run;
-    double z_max = 8;
-    double z_run;
+      const int f_evo_step_count = 100;
+      double product_f_evo[3*f_evo_step_count];
+      int i_z;
+      double bbh_merger_rate_run;
+      double dE_df_e_dOmega_e_run;
+      double z_max = 9.5;
+      double z_run;
 
-    for(i_z = 0; i_z < f_evo_step_count; i_z++) { 
+      //loop over redshift
 
-      z_run = z_max*(double)i_z/f_evo_step_count + 0.1;
+      for(i_z = 0; i_z < f_evo_step_count; i_z++) {
 
+        z_run = z_max*(double)i_z/f_evo_step_count + 0.049;
+
+        class_call(transfer_bbh_merger_rate(ppr,
+                                            pba,
+                                            pnl,
+                                            ptr,
+                                            z_run,
+                                            &bbh_merger_rate_run),
+                                            ptr->error_message,
+                                            ptr->error_message);
+        //convert from Mpc^(-3)yr^(-1) to Mpc^(-4)
+        bbh_merger_rate_run *= 3.26*pow(10, 6);
+
+        class_call(transfer_dE_df_e_dOmega_e(
+                                            pba,
+                                            ptr,
+                                            ptr->gw_frequency,
+                                            z_run,
+                                            20.0, //BH mass in Msun
+                                            20.0,
+                                            &dE_df_e_dOmega_e_run),
+                                            ptr->error_message,
+                                            ptr->error_message);
+
+        product_f_evo[3*i_z] = z_run;
+        product_f_evo[3*i_z+1] = bbh_merger_rate_run*dE_df_e_dOmega_e_run;
+        //printf("merger rate *  dE_df %.6e\n", product_f_evo[3*i_z+1]);
+        product_f_evo[3*i_z+2] = 0;
+      }
+      //derive, because we need the derivative of R*dE/df
+
+      class_call(array_derive(product_f_evo,
+                              3,
+                              f_evo_step_count,
+                              0, //z
+                              1, //R*dE/df
+                              2, //output column: d/dz(R*dE/df)
+                              ptr->error_message),
+                              ptr->error_message,
+                              ptr->error_message);
+
+      double z_axis[f_evo_step_count];
+      double product_f_evo_der[f_evo_step_count];
+
+      FILE *fpt_evo;
+      fpt_evo = fopen("rate_times_spectrum.csv", "w+");
+
+      for(i_z = 0; i_z < f_evo_step_count;i_z++){
+        z_axis[i_z] = product_f_evo[3*i_z];               //take z values from 1st column
+        fprintf(fpt_evo, "%.6e\n", z_axis[i_z]);
+        fprintf(fpt_evo, "%.6e\n", product_f_evo[3*i_z+1]);
+        product_f_evo_der[i_z] = product_f_evo[3*i_z+2];  //save derivative
+        //printf("derivative of R*dE/df %.6e\n", product_f_evo_der[i_z]);
+        fprintf(fpt_evo, "%.6e\n", product_f_evo_der[i_z]);
+      }
+
+      //printf("planned error after writing csv\n");
+      //return _FAILURE_;
+
+      double product_f_evo_3rd_der[f_evo_step_count];
+      class_call(array_spline_table_columns(z_axis,
+                                            f_evo_step_count,       //size
+                                            product_f_evo_der,
+                                            1,                      //columns
+                                            product_f_evo_3rd_der,  //2nd der. of 1st one
+                                            _SPLINE_EST_DERIV_,     //spline mode
+                                            ptr->error_message),
+                                            ptr->error_message,
+                                            ptr->error_message);
+
+      //interpolate derivative at given redshift
+      double product_der_at_z;
+      int product_der_at_z_size = 1;
+      int last_index = 0;
+      class_call(array_interpolate_spline(z_axis,
+                                          f_evo_step_count,
+                                          product_f_evo_der,
+                                          product_f_evo_3rd_der,
+                                          1,
+                                          z,
+                                          &last_index,
+                                          &product_der_at_z,
+                                          product_der_at_z_size,
+                                          ptr->error_message),
+                                          ptr->error_message,
+                                          ptr->error_message);
+
+      //printf("interpolation %.6e at %.6e \n", product_der_at_z, z);
+      double bbh_merger_rate;
+      double dE_df_e_dOmega_e;
       class_call(transfer_bbh_merger_rate(ppr,
                                           pba,
                                           pnl,
                                           ptr,
-                                          z_run,
-                                          &bbh_merger_rate_run),
+                                          z,
+                                          &bbh_merger_rate),
                                           ptr->error_message,
                                           ptr->error_message);
+      //convert from Mpc^(-3)yr^(-1) to Mpc^(-4)
+      bbh_merger_rate *= 3.26*pow(10, 6);
 
-      class_call(transfer_dE_df_e_dOmega_e(
-                                          pba,
+      class_call(transfer_dE_df_e_dOmega_e(pba,
                                           ptr,
                                           ptr->gw_frequency,
                                           z_run,
                                           20.0, //BH mass in Msun
                                           20.0,
-                                          &dE_df_e_dOmega_e_run),
+                                          &dE_df_e_dOmega_e),
                                           ptr->error_message,
                                           ptr->error_message);
 
-      product_f_evo[3*i_z] = z_run;
-      product_f_evo[3*i_z+1] = bbh_merger_rate_run*dE_df_e_dOmega_e_run;
-      product_f_evo[3*i_z+2] = 0;
-    }
-    //derive, because we need the derivative of R*dE/df
-
-    class_call(array_derive(product_f_evo,
-                            3,
-                            f_evo_step_count,
-                            0, //z
-                            1, //R*dE/df
-                            2, //output column: d/dz(R*dE/df)
-                            ptr->error_message),
-                            ptr->error_message,
-                            ptr->error_message);
-
-    double z_axis[f_evo_step_count];
-    double product_f_evo_der[f_evo_step_count];
-
-    for(i_z = 0; i_z < f_evo_step_count;i_z++){
-      z_axis[i_z] = product_f_evo[3*i_z];
-      product_f_evo_der[i_z] = product_f_evo[3*i_z+2];
+      //will be divided by a in the f_evo function
+      *dln_dNdz_dz = product_der_at_z/(bbh_merger_rate*dE_df_e_dOmega_e);
     }
 
-    // class_define_index -> more elegant
-    double product_f_evo_3rd_der[f_evo_step_count];
-    class_call(array_spline_table_columns(z_axis,
-                                          f_evo_step_count,
-                                          product_f_evo_der,
-                                          1,
-                                          product_f_evo_3rd_der,
-                                          _SPLINE_EST_DERIV_,
-                                          ptr->error_message),
-                                          ptr->error_message,
-                                          ptr->error_message);
+    else{
+      z0 = 2.55;
+      alpha = 1.3;
+      beta = 2.0;
 
-    double product_der_at_z;
-    int product_der_at_z_size;
-    int last_index = 0;
-    class_call(array_interpolate_spline(z_axis,
-                                        f_evo_step_count,
-                                        product_f_evo_der,
-                                        product_f_evo_3rd_der,
-                                        1,
-                                        z,
-                                        &last_index,
-                                        &product_der_at_z,
-                                        product_der_at_z_size,
-                                        ptr->error_message),
-                                        ptr->error_message,
-                                        ptr->error_message);
-
-    double bbh_merger_rate;
-    double dE_df_e_dOmega_e;
-    class_call(transfer_bbh_merger_rate(ppr,
-                                        pba,
-                                        pnl,
-                                        ptr,
-                                        z,
-                                        &bbh_merger_rate),
-                                        ptr->error_message,
-                                        ptr->error_message);
-
-    class_call(transfer_dE_df_e_dOmega_e(pba,
-                                        ptr,
-                                        ptr->gw_frequency,
-                                        z_run,
-                                        20.0, //BH mass in Msun
-                                        20.0,
-                                        &dE_df_e_dOmega_e),
-                                        ptr->error_message,
-                                        ptr->error_message);
-    //for evolution bias
-    //will be divided by a in the f_evo function
-    *dln_dNdz_dz = -product_der_at_z/(bbh_merger_rate*dE_df_e_dOmega_e);
-
+      *dln_dNdz_dz = (alpha - pow(z/z0,beta)*beta)/z;
+    }
   }
 }
 
@@ -2996,7 +3048,6 @@ int transfer_dE_df_e_dOmega_e(
   double f_emitted = f_0*(z+1); //in Hertz
   //double f_emit_geom = f_emitted/_c_*(3.1*pow(10, 22)); // in Mpc^-1
   double total_mass = m_1 + m_2; //in solar masses
-  //printf("total mass %f\n", total_mass);
 
   double f_1 = _c_*_c_*_c_/(pow(6, 1.5)*_G_*pow(6, 1.5)*2*_PI_*total_mass*_Msun_); //in Hertz
   double f_1_geom = f_1/_c_*(3.1*pow(10, 22)); // in  Mpc^-1
@@ -3007,7 +3058,7 @@ int transfer_dE_df_e_dOmega_e(
   double epsilon_2 = 1.6557;
   double alpha_2 = -323/224;
   double nu = pow((_PI_*(m_1+m_2)*_Msun_*_G_*f_emitted/pow(_c_, 3)), 1./3.); //convert both to meters
-  double omega_m = (1+alpha_2*pow(nu, 2.))/(1+epsilon_1*nu+epsilon_2*nu*nu);
+  double omega_m = (1+alpha_2*nu*nu)/(1+epsilon_1*nu+epsilon_2*nu*nu);
   double omega_r = _PI_*sigma*omega_m*pow(f_2/f_1, -2./3.)*(1+epsilon_1*nu+epsilon_2*nu*nu);
   //printf("omega r for continuity for A3 %f\n", omega_r);
   double m_chirp = pow(m_1*m_2, 3./5.)/pow(m_1+m_2, 1./5.); //in solar masses
@@ -3043,18 +3094,11 @@ int transfer_dE_df_e_dOmega_e(
   double c_0 = sqrt(5./24.)*pow(m_chirp_geom, 5./6.)*pow(_PI_, -2./3.)*pow(z+1., 5./6.)/pvecback[pba->index_bg_lum_distance];
   double c_e = c_0*pow(z+1, 7./6.);
 
-  //printf("c_0: %f\n", c_0);
-  //printf("c_e: %f\n", c_e);
-
   //piecewise defined amplitude
 
   double a_1 = c_e*pow(f_1_geom, -7./6.)*pow(f_emitted/f_1, -7./6.)*(1+alpha_2*nu*nu); //for f<f_1
-  //printf("a_1: %.6e\n", a_1);
   double a_2 = c_e*pow(f_1_geom, -7./6.)*omega_m*pow(f_emitted/f_1, -2./3.)*(1+epsilon_1*nu+epsilon_2*nu*nu); //for f_1<f<f_2
-  //printf("a_2: %.6e\n", a_2);
-  double a_3 = c_e*pow(f_1_geom, -7./6.)*omega_r/(2*_PI_)*sigma/(pow(f_emitted-f_2, 2.)+sigma*sigma/4.); //f_2<f
-  //printf("a_3: %.6e\n", a_3);
-
+  double a_3 = c_e*pow(f_1_geom, -7./6.)*omega_r/_PI_*sigma/(pow(f_emitted-f_2, 2.)+sigma*sigma); //f_2<f
   double h;
 
   if (f_emitted < f_1){
@@ -3070,8 +3114,6 @@ int transfer_dE_df_e_dOmega_e(
   }
 
   * dE_df_e_dOmega_e = _PI_*pvecback[pba->index_bg_lum_distance]*pvecback[pba->index_bg_lum_distance]*gw_frequency_geom*gw_frequency_geom/(2*(1+z)*(1+z))*h*h;
-
-  //printf("energy spectrum in dE_df %.6e\n", * dE_df_e_dOmega_e);
 
   return _SUCCESS_;
   }
@@ -3147,7 +3189,7 @@ int transfer_bbh_merger_rate_0(
   int i_m_halo;
   double m_halo_min = 3*pow(10., 11.); //initial values in solar masses/h - range from Tinker et al. arXiv:0803.2706
   double m_halo_max = 4*pow(10., 12.); //10**12 until 2.4*10**12
-  int step_count = 10; //how many calculated points for the spline for the integration
+  int step_count = 5; //how many calculated points for the spline for the integration
   double m_halo;
   double integrand_d_m_halo[3*step_count]; //integrand array for the M integration: SFR*HMF, 3 columns
   double rho_m;
@@ -3216,7 +3258,7 @@ int transfer_bbh_merger_rate_0(
 
     int i_time_delay;
     double t_d_min = 15.321; //in Mpc from 50 Myr, from 2206.02747
-    int t_step_count = 10;
+    int t_step_count = 5;
     double integrand_time_delay[3*t_step_count]; //integrand array for the t integration, 3 columns
     //i belive in you
 
@@ -3243,6 +3285,8 @@ int transfer_bbh_merger_rate_0(
   return _SUCCESS_;
 }
 
+/*BBH Merger Rate in Mpc^-3 yr^-1*/
+
 int transfer_bbh_merger_rate(
                             struct precision * ppr,
                             struct background * pba,
@@ -3254,7 +3298,7 @@ int transfer_bbh_merger_rate(
   int    i_m_halo;
   double m_halo_min = 3*pow(10., 11.); //initial values in solar masses/h - range from Tinker et al. arXiv:0803.2706
   double m_halo_max = 4*pow(10., 12.); //10**12 until 2.4*10**12
-  int    step_count = 10; //how many calculated points for the integration
+  int    step_count = 5; //how many calculated points for the integration
   double m_halo;
   double integrand_d_m_halo[3*step_count]; //integrand array for the M integration: SFR*HMF, 3 columns
   double rho_m;
@@ -3325,17 +3369,14 @@ int transfer_bbh_merger_rate(
                                   pba->error_message,
                                   ptr->error_message);
 
-    //printf("current tau %.6e\n", tau);
-
     int i_time_delay;
     double t_d_min = 15.321; //in Mpc from 50 Myr, from 2206.02747
-    int t_step_count = 10;
+    int t_step_count = 5;
     double integrand_time_delay[3*t_step_count]; //integrand array for the t integration, 3 columns
     //i belive in you
 
     for(i_time_delay=0; i_time_delay<t_step_count; i_time_delay++){
 
-      //printf("time delay index %d\n", i_time_delay);
       //printf("t_d %.6e\n", t_d_min+i_time_delay/t_step_count*(tau-t_d_min));
       integrand_time_delay[3*i_time_delay] = t_d_min+(double)i_time_delay/(double)t_step_count*(tau-t_d_min);
       integrand_time_delay[3*i_time_delay+1] = 1/(t_d_min+i_time_delay/t_step_count*(tau-t_d_min));
@@ -3354,10 +3395,8 @@ int transfer_bbh_merger_rate(
                                 ptr->error_message);
 
     double time_delay_factor;
-    time_delay_factor = integrand_time_delay[2] - integrand_time_delay[3*(t_step_count-1)+2]; //2 is index for integrated fct.
-    //printf("time delay factor %.6e\n", time_delay_factor);
+    time_delay_factor = integrand_time_delay[2] - integrand_time_delay[3*(t_step_count-1)+2];
     time_delay_factor *= log(tau/t_d_min);
-    //printf("time delay factor %.6e\n", time_delay_factor);
 
     * bbh_merger_rate = time_delay_factor*(integrand_d_m_halo[3*(step_count-1)+2]-integrand_d_m_halo[2]); //change units?
 
@@ -3700,13 +3739,11 @@ int transfer_selection_compute(
   if (tau_size > 1) {
 
     //printf("tau size %d\n", tau_size); //180
-    //FILE *fpt;
-    //fpt = fopen("window_fct_of_z.csv", "w+");
+    //FILE *fpt_w;
+    //fpt_w = fopen("window_fct_of_z.csv", "w+");
 
     /* loop over time */
     for (index_tau = 0; index_tau < tau_size; index_tau++) { 
-
-      //printf("index tau %d\n", index_tau);
 
       /* running value of time */
       tau = tau0 - tau0_minus_tau[index_tau];
@@ -3723,8 +3760,7 @@ int transfer_selection_compute(
 
       /* infer redshift */
       z = pba->a_today/pvecback[pba->index_bg_a]-1.;
-      //printf("z in selection compute: %f \n", z);
-
+      
       /* get corresponding dN/dz(z,bin) */
       class_call(transfer_selection_function(pba,
                                              ppr,
@@ -3739,15 +3775,18 @@ int transfer_selection_compute(
                  ptr->error_message,
                  ptr->error_message);
 
-      //printf("window fct %f\n", selection[index_tau]);
-      //fprintf(fpt, "%f\n", selection[index_tau]);
+      //printf("redshift for window %.6e\n", z);
+      //printf("window fct %.6e\n", selection[index_tau]);
+      //fprintf(fpt_w,"%.6e \n", z);
+      //fprintf(fpt_w, "%.6e\n", selection[index_tau]);
 
       /* get corresponding dN/dtau = dN/dz * dz/dtau = dN/dz * H */
       selection[index_tau] *= pvecback[pba->index_bg_H];
 
     }
 
-    //printf("done with window csv file \n");
+    //printf("planned error due to _FAILURE_ to stop after writing window csv file\n");
+    //return _FAILURE_;
 
     /* compute norm = \int W(tau) dtau */
     class_call(array_trapezoidal_integral(selection,
@@ -6138,19 +6177,41 @@ int transfer_f_evo(
                    ptr->error_message,
                    ptr->error_message);
       }
-
     }
-    else {
 
-      class_call(transfer_dln_dNdz_dz_analytic(ppr,
-                                              pba,
-                                              pnl,
-                                              ptr,
-                                              z,
-                                              tracer,
-                                              &dln_dNdz_dz),
-                 ptr->error_message,
-                 ptr->error_message);
+    else {
+      if(z < 0.1){
+        z = 0.1;
+      }
+
+      // FILE *fpt_f;
+      // fpt_f = fopen("evolution_bias.csv", "w+");
+      int i_z;
+      const int f_evo_step_count = 100;
+      double z_run;
+      double f_evo_run;
+      double z_max = 7.9;
+
+      for(i_z = 0; i_z < f_evo_step_count; i_z++) {
+
+        z_run = z_max*(double)i_z/f_evo_step_count + 0.1;
+
+        class_call(transfer_dln_dNdz_dz_analytic(ppr,
+                                                pba,
+                                                pnl,
+                                                ptr,
+                                                z_run,
+                                                tracer,
+                                                &dln_dNdz_dz),
+                  ptr->error_message,
+                  ptr->error_message);
+                  
+        f_evo_run = -dln_dNdz_dz/pvecback[pba->index_bg_a];
+        //fprintf(fpt_f, "%.6e\n", z_run);
+        //fprintf(fpt_f, "%.6e\n", f_evo_run);
+      }
+      // printf("planned error after writing f_evo csv\n");
+      // return _FAILURE_;
     }
 
     temp_f_evo -= dln_dNdz_dz/pvecback[pba->index_bg_a];
@@ -6160,6 +6221,7 @@ int transfer_f_evo(
   }
 
   *f_evo = temp_f_evo;
+  //printf("f evo fct. called\n");
 
   return _SUCCESS_;
 }

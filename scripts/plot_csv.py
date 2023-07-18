@@ -31,25 +31,25 @@ sfr4 = z4.iloc[1::2]
 sfr6 = z6.iloc[1::2]
 sfr8 = z8.iloc[1::2]
 
-#plt.plot(200*np.power(mass/M200kms[0],3), sfr0p1, label='z=0.1')
-#plt.plot(200*np.power(mass/M200kms[1],3), sfr0p5, label='z=0.5')
-#plt.plot(200*np.power(mass/M200kms[2],3), sfr1,   label='z=1')
-#plt.plot(200*np.power(mass/M200kms[3],3), sfr2,   label='z=2')
-#plt.plot(200*np.power(mass/M200kms[4],3), sfr4,   label='z=4')
-#plt.plot(200*np.power(mass/M200kms[5],3), sfr6,   label='z=6')
-#plt.plot(200*np.power(mass/M200kms[6],3), sfr8,   label='z=8')
-plt.plot(mass, sfr0p1, label='z=0.1')
-plt.plot(mass, sfr0p5, label='z=0.5')
-plt.plot(mass, sfr1, label='z=1')
-plt.plot(mass, sfr2, label='z=2')
-plt.plot(mass, sfr4, label='z=4')
-plt.plot(mass, sfr6, label='z=6')
-plt.plot(mass, sfr8, label='z=8')
-#plt.xlabel(r'Velocity at Peak Halo Mass in $\frac{km}{s}$', size='large')
-plt.xlabel(r'Halo Mass in $M_\odot$', size='large')
+plt.plot(200*np.power(mass/M200kms[0],3), sfr0p1, label='z=0.1')
+plt.plot(200*np.power(mass/M200kms[1],3), sfr0p5, label='z=0.5')
+plt.plot(200*np.power(mass/M200kms[2],3), sfr1,   label='z=1')
+plt.plot(200*np.power(mass/M200kms[3],3), sfr2,   label='z=2')
+plt.plot(200*np.power(mass/M200kms[4],3), sfr4,   label='z=4')
+plt.plot(200*np.power(mass/M200kms[5],3), sfr6,   label='z=6')
+plt.plot(200*np.power(mass/M200kms[6],3), sfr8,   label='z=8')
+#plt.plot(mass, sfr0p1, label='z=0.1')
+#plt.plot(mass, sfr0p5, label='z=0.5')
+#plt.plot(mass, sfr1, label='z=1')
+#plt.plot(mass, sfr2, label='z=2')
+#plt.plot(mass, sfr4, label='z=4')
+#plt.plot(mass, sfr6, label='z=6')
+#plt.plot(mass, sfr8, label='z=8')
+plt.xlabel(r'Velocity at Peak Halo Mass in $\frac{km}{s}$', size='large')
+#plt.xlabel(r'Halo Mass in $M_\odot$', size='large')
 plt.ylabel(r'SFR in $\frac{M_\odot}{yr}$', size='large')
 
-#plt.xlim(50, 2000)
+plt.xlim(50, 2000)
 plt.ylim(0.1, 1000)
 
 #plt.xticks(fontsize=10, rotation=45)
@@ -58,10 +58,11 @@ plt.xscale('log')
 plt.yscale('log')
 #plt.gca().xaxis.set_minor_formatter(FormatStrFormatter('%.0e'))
 
-plt.title('Star Formation Rate as a fct. of Halo Mass')
+plt.title('Star Formation Rate as a fct. of Velocity at Peak Halo Mass')
 plt.legend()
 #plt.savefig('dE_df.png', dpi=300)
 plt.show()
+
 # In[ ]:
 
 colnames = ['dE_df_z']
@@ -76,12 +77,10 @@ plt.xlabel('z')
 plt.ylabel(r'$\frac{dE}{df_ed\Omega_e}$ in $\frac{erg}{Hz}$')
 plt.title('Energy Spectrum as a fct. of redshift')
 plt.xscale('log')
-plt.yscale('log')
 #plt.yscale('log')
 #plt.ylabel("\frac{dE}{df_e d\Omega_e}", usetex=True)
 #plt.savefig('dE_df.png', dpi=300)
 plt.show()
-
 # In[ ]:
 
 colnames = ['dE_df_f']
@@ -131,6 +130,67 @@ plt.ylabel(r'Merger Rate in $\frac{1}{Mpc^3 yr}$')
 #plt.xscale('log')
 #plt.yscale('log')
 plt.title('BBH Merger Rate as a fct. of Redshift')
-#plt.savefig('dE_df.png', dpi=300)
+plt.show()
+
+# In[ ]:
+colnames = ['window_fct_z']
+data_w = pd.read_csv('window_fct_of_z.csv', names=colnames, delimiter=',',
+                   header=None)
+#data_w2 = pd.read_csv('window_fct_of_z_500Hz.csv', names=colnames, delimiter=',',
+#                   header=None)
+
+redshift = data_w.iloc[::2, :]
+window = data_w.iloc[1::2, :]
+#window500 = data_w2.iloc[1::2, :]
+
+plt.plot(redshift, window)
+#plt.plot(redshift, window500, label='500 Hz')
+#plt.plot(redshift, window10, label='10 Hz')
+
+plt.xlabel('z')
+plt.ylabel('Window Function')
+plt.title('Window Fct. as a fct. of redshift')
+#plt.xscale('log')
+#plt.yscale('log')
+plt.legend()
+plt.show()
+
+# In[ ]:
+colnames = ['evo_bias_z']
+data = pd.read_csv('evolution_bias.csv', names=colnames, delimiter=',',
+                   header=None)
+
+redshift = data.iloc[::2, :]
+evo_bias = data.iloc[1::2, :]
+
+plt.plot(redshift, evo_bias, color='brown')
+plt.xlabel('z')
+plt.ylabel('Evolution Bias')
+plt.title('Evolution Bias as a fct. of redshift')
+plt.show()
+
+# In[ ]:
+colnames = ['MR_dE_df']
+data = pd.read_csv('rate_times_spectrum.csv', names=colnames, delimiter=',',
+                   header=None)
+
+redshift = data.iloc[::3, :]
+MR_dE_df = data.iloc[1::3, :]
+MR_dE_df_der = data.iloc[2::3, :]
+
+plt.plot(redshift, MR_dE_df, color='purple')
+plt.xlabel('z')
+plt.ylabel('MR*dE/df')
+plt.title('Merger Rate times Energy Spectrum')
+#plt.xscale('log')
+plt.yscale('log')
+
+plt.show()
+
+plt.plot(redshift, MR_dE_df_der, color='green')
+plt.xlabel('z')
+plt.ylabel('d/dz(MR*dE/df)')
+plt.title('z derivative Merger Rate times Energy Spectrum')
+plt.xscale('log')
 plt.show()
 # %%

@@ -218,7 +218,7 @@ int output_init(
  * @param ppt Input: pointer perturbation structure
  * @param psp Input: pointer to spectra structure
  * @param ple Input: pointer to lensing structure
- * @param pop Input: pointer to output structure
+ * @param pop Input: pointer to output structuoutput_clre
  */
 
 int output_cl(
@@ -289,7 +289,9 @@ int output_cl(
 
   /** - second, open only the relevant files, and write a heading in each of them */
 
+  //printf("root directory %s \n", pop->root);
   sprintf(file_name,"%s%s",pop->root,"cl.dat");
+  //printf("file name for Cl %s \n", file_name);
 
   class_call(output_open_cl_file(psp,
                                  pop,
@@ -1307,6 +1309,9 @@ int output_open_cl_file(
     /** - First we deal with the entries that are dependent of format type */
 
     if (pop->output_format == class_format) {
+      time_t t = time(NULL);
+      struct tm tm = *localtime(&t);
+      fprintf(*clfile, "# File creation date & time: %d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
       fprintf(*clfile,"# dimensionless %s\n",first_line);
     }
     if (pop->output_format == camb_format) {
