@@ -1099,8 +1099,6 @@ int perturb_indices_of_perturbs(
   class_define_index(ppt->index_tp_perturbed_recombination_delta_chi,ppt->has_perturbed_recombination,index_type,1);
 
 
-
-
   /** - define k values with perturb_get_k_list() */
 
   class_call(perturb_get_k_list(ppr,

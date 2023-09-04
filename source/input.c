@@ -286,6 +286,7 @@ int input_init(
   int input_verbose = 0, int1, aux_flag, shooting_failed=_FALSE_;
 
   class_read_int("input_verbose",input_verbose);
+  input_verbose = 1;
   if (input_verbose >0) printf("Reading input parameters\n");
 
   /** - Do we need to fix unknown parameters? */
@@ -2689,6 +2690,23 @@ int input_read_parameters(
           errmsg, errmsg);
   if (flag1 == _TRUE_) {
     ptr->gw_frequency = param1;
+  }
+
+  class_call(parser_read_string(pfc,
+                                "disable_gw_evo_bias",
+                                &string1,
+                                &flag1,
+                                errmsg),
+                                errmsg,
+                                errmsg);
+
+  if (flag1 == _TRUE_){
+    if((strstr(string1,"y") != NULL) || (strstr(string1,"Y") != NULL)){
+      ptr->disable_gw_evo_bias = _TRUE_;
+    }
+    else {
+      ptr->disable_gw_evo_bias = _FALSE_;
+    }
   }
 	
 	class_call(parser_read_string(pfc,

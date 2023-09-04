@@ -64,9 +64,24 @@ plt.legend()
 plt.show()
 
 # In[ ]:
+colnames = ['BBH Merger Rate']
+data3 = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/BBH_merger_rate_new.csv', names=colnames, delimiter=',',
+                   header=None)
 
+redshift = data3.iloc[::2, :]
+mergerrate = data3.iloc[1::2, :]
+
+plt.plot(redshift, mergerrate, color='green')
+plt.xlabel('z')
+plt.ylabel(r'Merger Rate in $\frac{1}{Mpc^3 yr}$')
+#plt.xscale('log')
+#plt.yscale('log')
+plt.title('BBH Merger Rate as a fct. of Redshift')
+plt.show()
+
+# In[ ]:
 colnames = ['dE_df_z']
-data = pd.read_csv('dE_df_of_z.csv', names=colnames, delimiter=',',
+data = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/dE_df_of_z_100Hz.csv', names=colnames, delimiter=',',
                    header=None)
 
 redshift = data.iloc[::2, :]
@@ -76,25 +91,27 @@ plt.plot(redshift, dE_df, color='red')
 plt.xlabel('z')
 plt.ylabel(r'$\frac{dE}{df_ed\Omega_e}$ in $\frac{erg}{Hz}$')
 plt.title('Energy Spectrum as a fct. of redshift')
-plt.xscale('log')
 #plt.yscale('log')
 #plt.ylabel("\frac{dE}{df_e d\Omega_e}", usetex=True)
-#plt.savefig('dE_df.png', dpi=300)
 plt.show()
 # In[ ]:
-
 colnames = ['dE_df_f']
-dE_df = pd.read_csv('dE_df_of_f.csv', names=colnames, delimiter=',',
+dE_df = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/dE_df_of_f_cut.csv', names=colnames, delimiter=',',
                    header=None)
-f = np.linspace(0, 1000, 100)
+f = np.linspace(1, 1000, 99)
 
-plt.plot(f+1, dE_df, color='green')
+plt.plot(f, dE_df, color='green')
 plt.xlabel('f in Hz')
 plt.ylabel(r'$\frac{dE}{df_ed\Omega_e}$ in $\frac{erg}{Hz}$')
 plt.title('Energy Spectrum as a fct. of frequency')
-plt.xscale('log')
-plt.yscale('log')
 #plt.savefig('dE_df.png', dpi=300)
+plt.show()
+
+
+plt.plot(f, dE_df*mergerrate.iloc[0][0], color='green')
+plt.xlabel('f in Hz')
+plt.ylabel(r'$\frac{dE}{df_ed\Omega_e}$ in $\frac{erg}{Hz}$')
+plt.title('Energy Spectrum * Merger Rate as a fct. of frequency')
 plt.show()
 
 # In[ ]:
@@ -115,63 +132,87 @@ plt.title('Dimensionless Halo Mass Function')
 #plt.savefig('dE_df.png', dpi=300)
 plt.show()
 
-# In[ ]:
-
-colnames = ['BBH Merger Rate']
-data3 = pd.read_csv('BBH_merger_rate.csv', names=colnames, delimiter=',',
-                   header=None)
-
-redshift = data3.iloc[::2, :]
-mergerrate = data3.iloc[1::2, :]
-
-plt.plot(redshift, mergerrate, color='green')
-plt.xlabel('z')
-plt.ylabel(r'Merger Rate in $\frac{1}{Mpc^3 yr}$')
-#plt.xscale('log')
-#plt.yscale('log')
-plt.title('BBH Merger Rate as a fct. of Redshift')
-plt.show()
 
 # In[ ]:
 colnames = ['window_fct_z']
-data_w = pd.read_csv('window_fct_of_z.csv', names=colnames, delimiter=',',
+data_w = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/window_fct_of_z_gauss.csv', names=colnames, delimiter=',',
+                  header=None)
+data_w2 = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/window_fct_of_z_500Hz.csv', names=colnames, delimiter=',',
                    header=None)
-#data_w2 = pd.read_csv('window_fct_of_z_500Hz.csv', names=colnames, delimiter=',',
-#                   header=None)
 
-redshift = data_w.iloc[::2, :]
-window = data_w.iloc[1::2, :]
-#window500 = data_w2.iloc[1::2, :]
+redshift_gauss = data_w.iloc[::2, :]
+redshift = data_w2.iloc[::2, :]
+window_gauss = data_w.iloc[1::2, :]
+window500 = data_w2.iloc[1::2, :]
 
-plt.plot(redshift, window)
-#plt.plot(redshift, window500, label='500 Hz')
+#plt.plot(redshift_gauss, window_gauss, label='Gauss')
+plt.plot(redshift, window500)
 #plt.plot(redshift, window10, label='10 Hz')
 
 plt.xlabel('z')
 plt.ylabel('Window Function')
-plt.title('Window Fct. as a fct. of redshift')
-#plt.xscale('log')
-#plt.yscale('log')
+plt.title('Window as a fct. of redshift')
+plt.xscale('log')
+plt.legend()
+plt.show()
+
+# In[ ]:
+colnames = ['window_fct_tau']
+data_w = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/window_fct_of_tau_gauss.csv', names=colnames, delimiter=',',
+                  header=None)
+data_w2 = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/window_fct_of_tau.csv', names=colnames, delimiter=',',
+                  header=None)
+
+redshift_gauss = data_w.iloc[::2, :]
+redshift = data_w2.iloc[::2, :]
+window_gauss = data_w.iloc[1::2, :]
+window500 = data_w2.iloc[1::2, :]
+
+plt.plot(redshift_gauss, window_gauss, label='Gauss')
+plt.plot(redshift, window500, label='frequency dependent')
+#plt.plot(redshift, window10, label='10 Hz')
+
+plt.xlabel(r'$\tau$')
+plt.ylabel('Window Function')
+plt.gca().invert_xaxis()
+plt.title(r'Window as a fct. of $\tau$')
+#plt.xlim(0, 10)
 plt.legend()
 plt.show()
 
 # In[ ]:
 colnames = ['evo_bias_z']
-data = pd.read_csv('evolution_bias.csv', names=colnames, delimiter=',',
-                   header=None)
+data = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/evolution_bias.csv',
+                    names=colnames, delimiter=',', header=None)
 
 redshift = data.iloc[::2, :]
 evo_bias = data.iloc[1::2, :]
 
 plt.plot(redshift, evo_bias, color='brown')
 plt.xlabel('z')
-plt.ylabel('Evolution Bias')
+plt.ylabel(r'$b_e$')
 plt.title('Evolution Bias as a fct. of redshift')
+#plt.yscale('log')
 plt.show()
 
 # In[ ]:
+colnames = ['evo_bias_f']
+data = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/evolution_bias_f.csv',
+                    names=colnames, delimiter=',', header=None)
+
+redshift = data.iloc[::2, :]
+evo_bias = data.iloc[1::2, :]
+
+plt.plot(redshift, evo_bias, color='black')
+plt.xlabel('f')
+plt.ylabel(r'$b_e$')
+plt.title('Evolution Bias as a fct. of frequency')
+plt.yscale('log')
+plt.show()
+# In[ ]:
 colnames = ['MR_dE_df']
-data = pd.read_csv('rate_times_spectrum.csv', names=colnames, delimiter=',',
+data = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/rate_times_spectrum.csv',
+                   names=colnames, delimiter=',',
                    header=None)
 
 redshift = data.iloc[::3, :]
@@ -183,14 +224,14 @@ plt.xlabel('z')
 plt.ylabel('MR*dE/df')
 plt.title('Merger Rate times Energy Spectrum')
 #plt.xscale('log')
-plt.yscale('log')
+#plt.yscale('log')
 
 plt.show()
 
 plt.plot(redshift, MR_dE_df_der, color='green')
 plt.xlabel('z')
 plt.ylabel('d/dz(MR*dE/df)')
-plt.title('z derivative Merger Rate times Energy Spectrum')
-plt.xscale('log')
+plt.title('z derivative Merger Rate * Energy Spectrum')
+#plt.xscale('log')
 plt.show()
 # %%

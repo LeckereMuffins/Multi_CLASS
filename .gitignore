@@ -1,7 +1,6 @@
 output/
 output_old/
 *~
-build/
 class
 *.prof
 *.ini
@@ -18,4 +17,5 @@ doc/manual/latex
 .vscode/
 recycling/
 jobscript.sh
+build/*
 *.csv

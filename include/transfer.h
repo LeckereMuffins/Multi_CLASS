@@ -140,6 +140,7 @@ struct transfers {
   double * selection_magnification_bias; /**< magnification bias in the transfer function of density number count */
   
   double gw_frequency;                   /**< gravitational wave frequency -> for f_evo & window function */
+  short disable_gw_evo_bias;              /**Disable frequency dependent evolution bias to save computation time*/
 
   short has_nz_analytic;                 /**< Use analytic form for dN/dz (selection function) distribution? */
   short has_nz_evo_analytic;             /**< Use analytic form for dN/dz (evolution function) distribution? */

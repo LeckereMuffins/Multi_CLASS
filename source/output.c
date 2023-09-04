@@ -289,9 +289,9 @@ int output_cl(
 
   /** - second, open only the relevant files, and write a heading in each of them */
 
-  //printf("root directory %s \n", pop->root);
+  printf("root directory %s \n", pop->root);
   sprintf(file_name,"%s%s",pop->root,"cl.dat");
-  //printf("file name for Cl %s \n", file_name);
+  printf("file name for Cl %s \n", file_name);
 
   class_call(output_open_cl_file(psp,
                                  pop,
@@ -906,7 +906,7 @@ int output_tk(
   FileName file_name;
   char redshift_suffix[7]; // 7 is enough to write "z%d_" as long as there are at most 10'000 bins
   char first_line[_LINE_LENGTH_MAX_];
-  char ic_suffix[4];   // 4 is enough to write "ad", "bi", "cdi", "nid", "niv", ...
+  char ic_suffix[256];   // 4 is enough to write "ad", "bi", "cdi", "nid", "niv", ...
 
 
   index_md=ppt->index_md_scalars;
@@ -960,8 +960,12 @@ int output_tk(
 
     for (index_ic = 0; index_ic < ppt->ic_size[index_md]; index_ic++) {
 
-      class_call(perturb_output_firstline_and_ic_suffix(ppt, index_ic, first_line, ic_suffix),
-                 ppt->error_message, pop->error_message);
+      class_call(perturb_output_firstline_and_ic_suffix(ppt,
+                                                        index_ic,
+                                                        first_line, 
+                                                        ic_suffix),
+                 ppt->error_message,
+                 pop->error_message);
 
       if ((ppt->has_ad == _TRUE_) && (ppt->ic_size[index_md] == 1) )
         sprintf(file_name,"%s%s%s",pop->root,redshift_suffix,"tk.dat");
@@ -1302,7 +1306,10 @@ int output_open_cl_file(
   int colnum = 1;
   char tmp[60]; //A fixed number here is ok, since it should just correspond to the largest string which is printed to tmp.
 
-  class_open(*clfile,filename,"w",pop->error_message);
+  class_open(*clfile,
+              filename,
+              "w",
+              pop->error_message);
 
   if (pop->write_header == _TRUE_) {
 

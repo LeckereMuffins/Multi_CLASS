@@ -43,6 +43,8 @@ int main(int argc, char **argv) {
     return _FAILURE_;
   }
 
+  fflush(stdout);
+
   if (nonlinear_init(&pr,&ba,&th,&pt,&pm,&nl) == _FAILURE_) {
     printf("\n\nError in nonlinear_init \n=>%s\n",nl.error_message);
     return _FAILURE_;
