@@ -137,22 +137,22 @@ plt.show()
 colnames = ['window_fct_z']
 data_w = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/window_fct_of_z_gauss.csv', names=colnames, delimiter=',',
                   header=None)
-data_w2 = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/window_fct_of_z_500Hz.csv', names=colnames, delimiter=',',
+data_w2 = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/window_fct_of_z_1Hz.csv', names=colnames, delimiter=',',
                    header=None)
 
 redshift_gauss = data_w.iloc[::2, :]
 redshift = data_w2.iloc[::2, :]
 window_gauss = data_w.iloc[1::2, :]
-window500 = data_w2.iloc[1::2, :]
+window = data_w2.iloc[1::2, :]
 
 #plt.plot(redshift_gauss, window_gauss, label='Gauss')
-plt.plot(redshift, window500)
-#plt.plot(redshift, window10, label='10 Hz')
+#plt.plot(redshift, window)
+plt.plot(redshift, window, label='1 Hz')
 
 plt.xlabel('z')
 plt.ylabel('Window Function')
 plt.title('Window as a fct. of redshift')
-plt.xscale('log')
+#plt.xscale('log')
 plt.legend()
 plt.show()
 
@@ -160,7 +160,7 @@ plt.show()
 colnames = ['window_fct_tau']
 data_w = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/window_fct_of_tau_gauss.csv', names=colnames, delimiter=',',
                   header=None)
-data_w2 = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/window_fct_of_tau.csv', names=colnames, delimiter=',',
+data_w2 = pd.read_csv(r'/rwthfs/rz/cluster/home/la171705/GW_BG/Multi_CLASS/scripts/window_fct_of_tau_100Hz.csv', names=colnames, delimiter=',',
                   header=None)
 
 redshift_gauss = data_w.iloc[::2, :]
@@ -169,7 +169,7 @@ window_gauss = data_w.iloc[1::2, :]
 window500 = data_w2.iloc[1::2, :]
 
 plt.plot(redshift_gauss, window_gauss, label='Gauss')
-plt.plot(redshift, window500, label='frequency dependent')
+plt.plot(redshift, window500, label='frequency dep. at 100 Hz')
 #plt.plot(redshift, window10, label='10 Hz')
 
 plt.xlabel(r'$\tau$')

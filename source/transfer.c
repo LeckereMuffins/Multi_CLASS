@@ -2589,7 +2589,7 @@ int transfer_selection_function(
     //using arXiv:2206.02747, window function from equation 2.5
     //neglect factors in omega_agwb, bc. they cancel out in the window fct.
 
-    const int omega_z_step_count = 5;
+    const int omega_z_step_count = 10;
     double integrand_omega_agwb[3*omega_z_step_count]; 
     int i_z;
     double z_run;
@@ -2676,6 +2676,9 @@ int transfer_selection_function(
 
     //plug in integration limits
     double omega_agwb = integrand_omega_agwb[3*(omega_z_step_count-1)+2]-integrand_omega_agwb[2];
+    double omega_agwb_phys = omega_agwb*ptr->gw_frequency/pvecback[pba->index_bg_H]/_c_/_c_;
+    // printf("monopole: %.6e\n", omega_agwb_phys);
+
     //printf("upper bound %.6e\n", integrand_omega_agwb[3*(omega_z_step_count-1)+2]);
     //printf("lower bound %.6e\n", integrand_omega_agwb[2]);
 
@@ -2864,7 +2867,7 @@ int transfer_dln_dNdz_dz_analytic(
     if ((ptr->selection_window == gw_frequency_dep 
           && ptr->disable_gw_evo_bias == _FALSE_)) {
       
-      const int f_evo_step_count = 5;
+      const int f_evo_step_count = 10;
       double product_f_evo[3*f_evo_step_count];
       int i_z;
       double bbh_merger_rate_run;
@@ -3186,8 +3189,8 @@ int transfer_bbh_merger_rate_0(
 
   int i_m_halo;
   double m_halo_min = 3*pow(10., 11.); //initial values in solar masses/h - range from Tinker et al. arXiv:0803.2706
-  double m_halo_max = 4*pow(10., 12.); //10**12 until 2.4*10**12
-  const int step_count = 5; //how many calculated points for the spline for the integration
+  double m_halo_max = 4*pow(10., 12.);
+  const int step_count = 10; //how many calculated points for the spline for the integration
   double m_halo;
   double integrand_d_m_halo[3*step_count]; //integrand array for the M integration: SFR*HMF, 3 columns
   double rho_m;
@@ -3256,7 +3259,7 @@ int transfer_bbh_merger_rate_0(
 
     int i_time_delay;
     double t_d_min = 15.321; //in Mpc from 50 Myr, from 2206.02747
-    const int t_step_count = 5;
+    const int t_step_count = 10;
     double integrand_time_delay[3*t_step_count]; //integrand array for the t integration, 3 columns
     //i belive in you
 
@@ -3296,7 +3299,7 @@ int transfer_bbh_merger_rate(
   int    i_m_halo;
   double m_halo_min = 3*pow(10., 11.); //initial values in solar masses/h - range from Tinker et al. arXiv:0803.2706
   double m_halo_max = 4*pow(10., 12.); //10**12 until 2.4*10**12
-  const int step_count = 5; //how many calculated points for the integration
+  const int step_count = 10; //how many calculated points for the integration
   double m_halo;
   double integrand_d_m_halo[3*step_count]; //integrand array for the M integration: SFR*HMF, 3 columns
   double rho_m;
@@ -3369,7 +3372,7 @@ int transfer_bbh_merger_rate(
 
     int i_time_delay;
     double t_d_min = 15.321; //in Mpc from 50 Myr, from 2206.02747
-    const int t_step_count = 5;
+    const int t_step_count = 10;
     double integrand_time_delay[3*t_step_count]; //integrand array for the t integration, 3 columns
     //i belive in you
 
@@ -3791,6 +3794,15 @@ int transfer_selection_compute(
     for (index_tau = 0; index_tau < tau_size; index_tau++) {
       selection[index_tau] /= norm;
       tau = tau0 - tau0_minus_tau[index_tau];
+      class_call(background_at_tau(pba,
+                                   tau,
+                                   pba->long_info,
+                                   pba->inter_normal,
+                                   &last_index,
+                                   pvecback),
+                 pba->error_message,
+                 ptr->error_message); 
+      //z = pba->a_today/pvecback[pba->index_bg_a]-1.;           
       // fprintf(fpt_w,"%.6e \n", tau);
       // fprintf(fpt_w, "%.6e\n", selection[index_tau]);
     }
