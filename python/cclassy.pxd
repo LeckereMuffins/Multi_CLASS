@@ -319,7 +319,7 @@ cdef extern from "class.h":
     int perturb_init(void*,void*,void*,void*)
     int primordial_init(void*,void*,void*)
     int nonlinear_init(void*,void*,void*,void*,void*,void*)
-    int transfer_init(void*,void*,void*,void*,void*,void*)
+    int transfer_init(void*,void*,void*,void*,void*,void*,void*)
     int spectra_init(void*,void*,void*,void*,void*,void*,void*)
     int lensing_init(void*,void*,void*,void*,void*)
 

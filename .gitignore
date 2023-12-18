@@ -9,6 +9,8 @@ libclass.a
 python/classy.c
 *.pyc
 python/build/
+python/dist/
+python/classy.egg-info/
 *.dSYM
 RealSpaceInterface/cache/
 .DS_Store
