@@ -1149,7 +1149,7 @@ int nonlinear_halo_mass_function(
 
   /* Halo mass function. The usual definition:  dn/dM = (rho_m/M) f(sigma) (d ln sigma^-1 / dM)
       is equivalent to: dn/dM = -1/2 (rho_m/M) f(sigma) sigma^-2 (dR/dM) (d sigma^2 / dR)
-      Using M = rho_m * 4/3 pi R^3 thnis finally gives:
+      Using M = rho_m * 4/3 pi R^3 this finally gives:
       dn/dM = -3/(32 pi^2 R^5 rho_m) f(sigma) sigma^-2 (d sigma^2 / dR) */
 
   *dn_dM = -3./32./_PI_/_PI_/R/R/R/R/R/rho_m/ *sigma / *sigma * *f * *dsigma2_dR /pba->h/pba->h/pba->h; // dn/dM in units of (h/Msun)/(Mpc/h)**3, i.e. h^4/Msun/Mpc^3

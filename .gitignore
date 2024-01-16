@@ -16,6 +16,6 @@ doc/manual/html
 doc/manual/latex
 .vscode/
 recycling/
-jobscript.sh
 build/*
 *.csv
+*.sh
