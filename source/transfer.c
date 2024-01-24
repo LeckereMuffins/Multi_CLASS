@@ -2587,98 +2587,14 @@ int transfer_selection_function(
   if (ptr->selection_window == gw_frequency_dep) {
 
     //using arXiv:2206.02747, window function from equation 2.5
-    //neglect factors in omega_agwb, bc. they cancel out in the window fct.
 
-    const int omega_z_step_count = 100;
-    double integrand_omega_agwb[3*omega_z_step_count]; 
-    int i_z;
-    double z_run;
-    double bbh_merger_rate_run; 
-    double dE_df_e_dOmega_e_run; 
-    double tau_run;
     double pvecback[pba->bg_size_short];
     int last_index;
     // FILE *fpt_dE_df;
     // fpt_dE_df = fopen("dE_df_of_z.csv", "w+");
 
-    double z_max = 8;
 
-    for(i_z = 0; i_z < omega_z_step_count; i_z++) {
 
-      z_run = z_max*(double)i_z/omega_z_step_count + 0.1;
-      
-      class_call(background_tau_of_z(pba,
-                                    z_run,
-                                    &tau_run),
-                                    pba->error_message,
-                                    ptr->error_message);
-
-      class_call(background_at_tau(pba,
-                                  tau_run,
-                                  pba->short_info,
-                                  pba->inter_normal,
-                                  &last_index,
-                                  pvecback),
-                                  pba->error_message,
-                                  ptr->error_message);
-
-      class_call(transfer_bbh_merger_rate(
-                                        ppr,
-                                        pba,
-                                        pnl,
-                                        ptr,
-                                        z_run,
-                                        &bbh_merger_rate_run),
-                                        ptr->error_message,
-                                        ptr->error_message);
-
-      //convert from Mpc^(-3)yr^(-1) to Mpc^(-4)
-      bbh_merger_rate_run *= 3.26*pow(10, 6);
-
-      class_call(transfer_dE_df_e_dOmega_e(
-                                          pba,
-                                          ptr,
-                                          ptr->gw_frequency,
-                                          z_run,
-                                          20.0, //in solar masses
-                                          20.0,
-                                          &dE_df_e_dOmega_e_run),
-                                          ptr->error_message,
-                                          ptr->error_message);
-
-      double dE_df_e_dOmega_e_run_cgs = dE_df_e_dOmega_e_run*9.61*pow(10, 44); // from Mpc^2 to m^2
-      dE_df_e_dOmega_e_run_cgs *= _c_*_c_*_c_/_G_; //to SI units for the csv file
-
-      // fprintf(fpt_dE_df, "%.6e\n", z_run);
-      // fprintf(fpt_dE_df, "%.6e\n", dE_df_e_dOmega_e_run_cgs);
-
-      integrand_omega_agwb[3*i_z] = z_run;
-      //printf("integrand_omega_agwb %.6e\n", bbh_merger_rate_run*dE_df_e_dOmega_e_run/(pvecback[pba->index_bg_H]*(1+z_run)));
-      integrand_omega_agwb[3*i_z+1] = bbh_merger_rate_run*dE_df_e_dOmega_e_run/(pvecback[pba->index_bg_H]*(1+z_run));
-      integrand_omega_agwb[3*i_z+2] = 0; //for clarity
-    }
-    
-    // printf("planned error due to _FAILURE_ to stop after writing E spectrum csv file\n");
-    // return _FAILURE_;
-
-    //integrate over z for Omega_AGWB (arXiv:2206.02747, equation 2.1)
-
-    class_call(array_integrate(integrand_omega_agwb,
-                              3,
-                              omega_z_step_count,
-                              0,
-                              1,
-                              2,
-                              ptr->error_message),
-                              ptr->error_message,
-                              ptr->error_message);
-
-    //plug in integration limits
-    double omega_agwb = integrand_omega_agwb[3*(omega_z_step_count-1)+2]-integrand_omega_agwb[2];
-    double omega_agwb_phys = omega_agwb*ptr->gw_frequency/pvecback[pba->index_bg_rho_crit]/_c_/_c_;
-
-    //printf("upper bound %.6e\n", integrand_omega_agwb[3*(omega_z_step_count-1)+2]);
-    //printf("lower bound %.6e\n", integrand_omega_agwb[2]);
 
     double bbh_merger_rate;
     class_call(transfer_bbh_merger_rate(
@@ -2721,7 +2637,8 @@ int transfer_selection_function(
                                   pba->error_message,
                                   ptr->error_message);
 
-    *selection = bbh_merger_rate*dE_df_e_dOmega_e/((1+z)*omega_agwb);
+    // below is eq. (3.47) * H(z) in thesis F.Keil
+    *selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency*(3.1*pow(10, 22))/((1+z)*ptr->agwb_monopole*_c_*_c_*_c_*pvecback[pba->index_bg_rho_crit]); // extra _c_ and pow because gw_frequency is in Hz
     //*selection = bbh_merger_rate;
     //printf("window fct. without dNdz %.6e\n", *selection);
 
@@ -3750,8 +3667,16 @@ int transfer_selection_compute(
 
   if (tau_size > 1) {
 
-    // FILE *fpt_w;
-    // fpt_w = fopen("window_fct_of_z.csv", "w+");
+    //FILE *fpt_w;
+    //fpt_w = fopen("window_fct_of_z.csv", "w+");
+    
+    if (ptr->selection_window == gw_frequency_dep)
+      class_call(transfer_agwb_monopole(pba,
+                                        ppr,
+                                        pnl,
+                                        ptr),
+                                        ptr->error_message,
+                                        ptr->error_message);
 
     /* loop over time */
     for (index_tau = 0; index_tau < tau_size; index_tau++) { 
@@ -3813,13 +3738,13 @@ int transfer_selection_compute(
                  pba->error_message,
                  ptr->error_message); 
 
-      // z = pba->a_today/pvecback[pba->index_bg_a]-1.;           
-      // fprintf(fpt_w,"%.6e \n", z);
-      // fprintf(fpt_w, "%.6e\n", selection[index_tau]);
+      //z = pba->a_today/pvecback[pba->index_bg_a]-1.;           
+      //fprintf(fpt_w,"%.6e, ", z);
+      //fprintf(fpt_w, "%.6e\n", selection[index_tau]);
     }
 
-    // printf("planned error due to _FAILURE_ to stop after writing window csv file\n");
-    // return _FAILURE_;
+    //printf("planned error due to _FAILURE_ to stop after writing window csv file\n");
+    //return _FAILURE_;
 
   }
 
@@ -6243,3 +6168,106 @@ int transfer_f_evo(
 
   return _SUCCESS_;
 } 
+
+int transfer_agwb_monopole(
+                          struct background * pba,
+                          struct precision * ppr,
+                          struct nonlinear * pnl,
+                          struct transfers * ptr
+                          ){
+  
+
+  const int omega_z_step_count = 100; // make into a precision parameter
+  double integrand_omega_agwb[3*omega_z_step_count];
+  int i_z;
+  double z_run;
+  double bbh_merger_rate_run;
+  double dE_df_e_dOmega_e_run;
+  double tau_run;
+  double pvecback[pba->bg_size_short];
+  int last_index;
+
+  double z_max = 8; // make into a precision parameter
+
+  for(i_z = 0; i_z < omega_z_step_count; i_z++) {
+    z_run = z_max*(double)i_z/omega_z_step_count + 0.1;
+
+    class_call(background_tau_of_z(pba,
+                                  z_run,
+                                  &tau_run),
+                                  pba->error_message,
+                                  ptr->error_message);
+
+    class_call(background_at_tau(pba,
+                                tau_run,
+                                pba->short_info,
+                                pba->inter_normal,
+                                &last_index,
+                                pvecback),
+                                pba->error_message,
+                                ptr->error_message);
+
+    //convert from Mpc^(-3)yr^(-1) to Mpc^(-4)
+    class_call(transfer_bbh_merger_rate(
+                                      ppr,
+                                      pba,
+                                      pnl,
+                                      ptr,
+                                      z_run,
+                                      &bbh_merger_rate_run),
+                                      ptr->error_message,
+                                      ptr->error_message);
+
+    bbh_merger_rate_run *= 3.26*pow(10, 6);
+
+    class_call(transfer_dE_df_e_dOmega_e(
+                                        pba,
+                                        ptr,
+                                        ptr->gw_frequency,
+                                        z_run,
+                                        20.0, //in solar masses
+                                        20.0,
+                                        &dE_df_e_dOmega_e_run),
+                                        ptr->error_message,
+                                        ptr->error_message);
+
+    double dE_df_e_dOmega_e_run_cgs = dE_df_e_dOmega_e_run*9.61*pow(10, 44); // from Mpc^2 to m^2
+    dE_df_e_dOmega_e_run_cgs *= _c_*_c_*_c_/_G_; //to SI units for the csv file
+
+    // fprintf(fpt_dE_df, "%.6e\n", z_run);
+    // fprintf(fpt_dE_df, "%.6e\n", dE_df_e_dOmega_e_run_cgs);
+
+    integrand_omega_agwb[3*i_z] = z_run;
+    //printf("integrand_omega_agwb %.6e\n", bbh_merger_rate_run*dE_df_e_dOmega_e_run/(pvecback[pba->index_bg_H]*(1+z_run)));
+    integrand_omega_agwb[3*i_z+1] = bbh_merger_rate_run*dE_df_e_dOmega_e_run/(pvecback[pba->index_bg_H]*(1+z_run));
+    integrand_omega_agwb[3*i_z+2] = 0; //for clarity
+  }
+    
+  // printf("planned error due to _FAILURE_ to stop after writing E spectrum csv file\n");
+  // return _FAILURE_;
+
+  //integrate over z for Omega_AGWB (arXiv:2206.02747, equation 2.1)
+
+  class_call(array_integrate(integrand_omega_agwb,
+                            3,
+                            omega_z_step_count,
+                            0,
+                            1,
+                            2,
+                            ptr->error_message),
+                            ptr->error_message,
+                            ptr->error_message);
+
+  //plug in integration limits
+  double integral = integrand_omega_agwb[3*(omega_z_step_count-1)+2]-integrand_omega_agwb[2];
+  ptr->agwb_monopole = integral*ptr->gw_frequency/_c_*(3.1*pow(10, 22))/pvecback[pba->index_bg_rho_crit]/_c_/_c_;
+  // frequency above is in Hz, need to change to 1/Mpc
+  
+  //printf("upper bound %.6e\n", integrand_omega_agwb[3*(omega_z_step_count-1)+2]);
+  //printf("lower bound %.6e\n", integrand_omega_agwb[2]);
+
+  if (ptr->transfer_verbose > 4)
+    printf("AGWB Monopole: %.6e", ptr->agwb_monopole);
+  
+  return _SUCCESS_;
+}

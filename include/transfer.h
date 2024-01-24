@@ -141,6 +141,7 @@ struct transfers {
   
   double gw_frequency;                   /**< gravitational wave frequency -> for f_evo & window function */
   short disable_gw_evo_bias;              /**Disable frequency dependent evolution bias to save computation time*/
+  double agwb_monopole;                  /**< gravitational wave monopole for chosen frequency (not the physical one output by )*/
 
   short has_nz_analytic;                 /**< Use analytic form for dN/dz (selection function) distribution? */
   short has_nz_evo_analytic;             /**< Use analytic form for dN/dz (evolution function) distribution? */
@@ -858,6 +859,13 @@ extern "C" {
                    int tracer,
                    double* f_evo
                   );
+
+  int transfer_agwb_monopole(
+                            struct background * pba,
+                            struct precision * ppr,
+                            struct nonlinear * pnl,
+                            struct transfers * ptr
+                            );
 
 #ifdef __cplusplus
 }
