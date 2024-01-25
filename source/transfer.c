@@ -3330,6 +3330,7 @@ int transfer_bbh_merger_rate(
     * bbh_merger_rate = time_delay_factor*(integrand_d_m_halo[3*(step_count-1)+2]-integrand_d_m_halo[2]); //change units?
 
     //NORMALISATION
+    /*
     double bbh_merger_rate_0;
     class_call(transfer_bbh_merger_rate_0(
                                           ppr,
@@ -3339,9 +3340,10 @@ int transfer_bbh_merger_rate(
                                           &bbh_merger_rate_0),
                                           ptr->error_message,
                                           ptr->error_message);
+    */
 
     //printf("normalisation merger rate %.6e\n", bbh_merger_rate_0);
-    * bbh_merger_rate *= 1.9*pow(10, -8)/(bbh_merger_rate_0);
+    * bbh_merger_rate *= 1.9*pow(10, -8)/(ptr->bbh_merger_rate_0);
 
   return _SUCCESS_;
 }
@@ -3670,13 +3672,6 @@ int transfer_selection_compute(
     //FILE *fpt_w;
     //fpt_w = fopen("window_fct_of_z.csv", "w+");
     
-    if (ptr->selection_window == gw_frequency_dep)
-      class_call(transfer_agwb_monopole(pba,
-                                        ppr,
-                                        pnl,
-                                        ptr),
-                                        ptr->error_message,
-                                        ptr->error_message);
 
     /* loop over time */
     for (index_tau = 0; index_tau < tau_size; index_tau++) { 
@@ -5557,6 +5552,23 @@ int transfer_precompute_selection(
 
   //printf("index max %d \n", ptr->tt_size[index_md]); //10
 
+  class_call(transfer_bbh_merger_rate_0(
+                                        ppr,
+                                        pba,
+                                        pnl,
+                                        ptr,
+                                        &(ptr->bbh_merger_rate_0)),
+                                        ptr->error_message,
+                                        ptr->error_message);
+
+  if (ptr->selection_window == gw_frequency_dep)
+    class_call(transfer_agwb_monopole(pba,
+                                      ppr,
+                                      pnl,
+                                      ptr),
+                                      ptr->error_message,
+                                      ptr->error_message);
+  
   /* Loop through different types to be precomputed */
   for (index_tt = 0; index_tt < ptr->tt_size[index_md]; index_tt++) {
 
@@ -6261,13 +6273,13 @@ int transfer_agwb_monopole(
   //plug in integration limits
   double integral = integrand_omega_agwb[3*(omega_z_step_count-1)+2]-integrand_omega_agwb[2];
   ptr->agwb_monopole = integral*ptr->gw_frequency/_c_*(3.1*pow(10, 22))/pvecback[pba->index_bg_rho_crit]/_c_/_c_;
-  // frequency above is in Hz, need to change to 1/Mpc
+  // frequency above is in Hz, _c_ * (3.1*pow(...)) changes it to 1/Mpc. This is only correct if rho_crit is in natural units
   
   //printf("upper bound %.6e\n", integrand_omega_agwb[3*(omega_z_step_count-1)+2]);
   //printf("lower bound %.6e\n", integrand_omega_agwb[2]);
 
   if (ptr->transfer_verbose > 4)
-    printf("AGWB Monopole: %.6e", ptr->agwb_monopole);
+    printf("AGWB Monopole: %.6e\n", ptr->agwb_monopole);
   
   return _SUCCESS_;
 }
