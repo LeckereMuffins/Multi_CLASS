@@ -28,6 +28,7 @@
  */
 
 #include "transfer.h"
+#include "common.h"
 
 /**
  * Transfer function \f$ \Delta_l^{X} (q) \f$ at a given wavenumber q.
@@ -511,6 +512,8 @@ int transfer_free(
       free(ptr->nz_evo_dd_dlog_nz_2);
     }
   }
+
+  free(ptr->bbh_merger_rates);
 
   return _SUCCESS_;
 
@@ -3223,6 +3226,14 @@ int transfer_bbh_merger_rate(
                             struct transfers * ptr,
                             double z,
                             double * bbh_merger_rate) {
+  
+  // load potentially saved bbh_merger_rate from tr->bbh_merger_rates
+  for (int index_bbh_merger_rate = 0; index_bbh_merger_rate < ptr->saved_bbh_merger_rates; index_bbh_merger_rate++){
+    if (ptr->bbh_merger_rates[2*index_bbh_merger_rate] == z){
+      *bbh_merger_rate = ptr->bbh_merger_rates[2*index_bbh_merger_rate+1];
+      return _SUCCESS_;
+    }
+  }
 
   int    i_m_halo;
   double m_halo_min = 3*pow(10., 11.); //initial values in solar masses/h - range from Tinker et al. arXiv:0803.2706
@@ -3344,6 +3355,15 @@ int transfer_bbh_merger_rate(
 
     //printf("normalisation merger rate %.6e\n", bbh_merger_rate_0);
     * bbh_merger_rate *= 1.9*pow(10, -8)/(ptr->bbh_merger_rate_0);
+
+    // save calculated bbh merger rate
+    if (ptr->saved_bbh_merger_rates >= ptr->size_bbh_merger_rates){
+      ptr->size_bbh_merger_rates += 10;
+      class_realloc(ptr->bbh_merger_rates, ptr->bbh_merger_rates, 2*ptr->size_bbh_merger_rates*sizeof(double), ptr->error_message);
+    }
+    ptr->bbh_merger_rates[2*ptr->saved_bbh_merger_rates] = z;
+    ptr->bbh_merger_rates[2*ptr->saved_bbh_merger_rates+1] = *bbh_merger_rate;
+    ptr->saved_bbh_merger_rates += 1;
 
   return _SUCCESS_;
 }
@@ -5534,6 +5554,10 @@ int transfer_precompute_selection(
   /* source evolution factor */
   double f_evo = 0.;
 
+  /* initial size of bbh_merger_rates array */
+  ptr->size_bbh_merger_rates = 10;
+  class_alloc(ptr->bbh_merger_rates, 2*ptr->size_bbh_merger_rates*sizeof(double), ptr->error_message);
+  ptr->saved_bbh_merger_rates = 0;
 
   /* Setup initial variables and arrays*/
   int index_md = ppt->index_md_scalars;

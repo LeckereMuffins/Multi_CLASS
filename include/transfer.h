@@ -143,6 +143,9 @@ struct transfers {
   short disable_gw_evo_bias;              /**Disable frequency dependent evolution bias to save computation time*/
   double agwb_monopole;                  /**< gravitational wave monopole for chosen frequency (not the physical one output by )*/
   double bbh_merger_rate_0;               /**< bbh merger rate today*/
+  double * bbh_merger_rates;              /**< bbh merger rates saved so they are not calculated again. Always z value followed by bbh merger rate*/
+  int size_bbh_merger_rates;              /**< number of bbh_merger_rates in array (array is twice this length large)*/
+  int saved_bbh_merger_rates;
 
   short has_nz_analytic;                 /**< Use analytic form for dN/dz (selection function) distribution? */
   short has_nz_evo_analytic;             /**< Use analytic form for dN/dz (evolution function) distribution? */
