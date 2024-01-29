@@ -2641,7 +2641,8 @@ int transfer_selection_function(
                                   ptr->error_message);
 
     // below is eq. (3.47) * H(z) in thesis F.Keil
-    *selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency*(3.1*pow(10, 22))/((1+z)*ptr->agwb_monopole*_c_*_c_*_c_*pvecback[pba->index_bg_rho_crit]); // extra _c_ and pow because gw_frequency is in Hz
+    *selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency/((1+z)*ptr->agwb_monopole*_c_*_c_*pvecback[pba->index_bg_rho_crit]); // extra _c_ and pow because gw_frequency is in Hz
+    //*selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency*(3.1*pow(10, 22))/((1+z)*ptr->agwb_monopole*_c_*_c_*_c_*pvecback[pba->index_bg_rho_crit]); // extra _c_ and pow because gw_frequency is in Hz
     //*selection = bbh_merger_rate;
     //printf("window fct. without dNdz %.6e\n", *selection);
 
@@ -6296,8 +6297,8 @@ int transfer_agwb_monopole(
 
   //plug in integration limits
   double integral = integrand_omega_agwb[3*(omega_z_step_count-1)+2]-integrand_omega_agwb[2];
-  ptr->agwb_monopole = integral*ptr->gw_frequency/_c_*(3.1*pow(10, 22))/pvecback[pba->index_bg_rho_crit]/_c_/_c_;
-  // frequency above is in Hz, _c_ * (3.1*pow(...)) changes it to 1/Mpc. This is only correct if rho_crit is in natural units
+  ptr->agwb_monopole = integral*ptr->gw_frequency/pvecback[pba->index_bg_rho_crit]/_c_/_c_; ///_c_*(3.1*pow(10, 22))
+  // frequency above is in Hz, _c_ * (3.1*pow(...)) changes it to 1/Mpc. Is the dE_df_e_dOmega_e in the integral in natural units?
   
   //printf("upper bound %.6e\n", integrand_omega_agwb[3*(omega_z_step_count-1)+2]);
   //printf("lower bound %.6e\n", integrand_omega_agwb[2]);
