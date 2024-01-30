@@ -5842,7 +5842,9 @@ int transfer_precompute_selection(
                                             tracer),
                  ptr->error_message,
                  ptr->error_message);
-      printf("Finished preselection compute \n");
+
+      if (ptr->transfer_verbose > 2)
+        printf("Finished preselection compute \n");
 
       /* redefine the time sampling */
       class_call(transfer_lensing_sampling(ppr,
