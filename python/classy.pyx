@@ -591,14 +591,16 @@ cdef class Class:
         free(lcl)
         return cl
 
-    def density_cl(self, lmax=-1, nofail=False):
+    def density_cl(self, lmin=2, lmax=-1, nofail=False):
         """
-        density_cl(lmax=-1, nofail=False)
+        density_cl(lmin=2, lmax=-1, nofail=False)
 
         Return a dictionary of the primary C_l for the matter
 
         Parameters
         ----------
+        lmin : int, optional
+            Define the minimum l for which the C_l will not be replaced by 0
         lmax : int, optional
             Define the maximum l for which the C_l will be returned (inclusively)
         nofail: bool, optional
@@ -672,7 +674,7 @@ cdef class Class:
             if elem in spectra:
                 cl[elem] = np.zeros(lmax+1, dtype=np.double)
 
-        for ell from 2<=ell<lmax+1:
+        for ell from lmin<=ell<lmax+1:
             if spectra_cl_at_l(&self.sp, ell, dcl, cl_md, cl_md_ic) == _FAILURE_:
                 raise CosmoSevereError(self.sp.error_message)
             if 'dd' in spectra:
@@ -1051,6 +1053,9 @@ cdef class Class:
 
     def h(self):
         return self.ba.h
+
+    def agwb_monopole(self):
+        return self.tr.agwb_monopole
 
     def n_s(self):
         return self.pm.n_s

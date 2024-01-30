@@ -167,6 +167,7 @@ cdef extern from "class.h":
         int index_md_scalars
 
     cdef struct transfers:
+        double agwb_monopole
         ErrorMsg error_message
 
     cdef struct primordial:
