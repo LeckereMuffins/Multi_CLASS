@@ -167,11 +167,11 @@ class_precision_parameter(k_step_super,double,0.002) /**< step in k space, in un
 class_precision_parameter(k_step_transition,double,0.2) /**< dimensionless number regulating the transition from 'sub' steps to 'super' steps. Decrease for more precision. */
 class_precision_parameter(k_step_super_reduction,double,0.1) /**< the step k_step_super is reduced by this amount in the k-->0 limit (below scale of Hubble and/or curvature radius) */
 
-class_precision_parameter(k_per_decade_for_pk,double,10) /**< if values needed between kmax inferred from k_oscillations and k_kmax_for_pk, this gives the number of k per decade outside the BAO region*/
+class_precision_parameter(k_per_decade_for_pk,double,10.0) /**< if values needed between kmax inferred from k_oscillations and k_kmax_for_pk, this gives the number of k per decade outside the BAO region*/
 
 class_precision_parameter(idmdr_boost_k_per_decade_for_pk,double,1.0) /**< boost factor for the case of DAO in idm-idr models */
 
-class_precision_parameter(k_per_decade_for_bao,double,70) /**< if values needed between kmax inferred from k_oscillations and k_kmax_for_pk, this gives the number of k per decade inside the BAO region (for finer sampling)*/
+class_precision_parameter(k_per_decade_for_bao,double,70.0) /**< if values needed between kmax inferred from k_oscillations and k_kmax_for_pk, this gives the number of k per decade inside the BAO region (for finer sampling)*/
 
 class_precision_parameter(k_bao_center,double,3.0) /**< in ln(k) space, the central value of the BAO region where sampling is finer is defined as k_rec times this number (recommended: 3, i.e. finest sampling near 3rd BAO peak) */
 
@@ -222,7 +222,7 @@ class_precision_parameter(gw_ini,double,1.0)      /**< initial condition for ten
 /**
  * default step \f$ d \tau \f$ in perturbation integration, in units of the timescale involved in the equations (usually, the min of \f$ 1/k \f$, \f$ 1/aH \f$, \f$ 1/\dot{\kappa} \f$)
  */
-class_precision_parameter(perturb_integration_stepsize,double,2)
+class_precision_parameter(perturb_integration_stepsize,double,0.5)
 
 /**
  * default step \f$ d \tau \f$ for sampling the source function, in units of the timescale involved in the sources: \f$ (\dot{\kappa}- \ddot{\kappa}/\dot{\kappa})^{-1} \f$
@@ -409,6 +409,16 @@ class_precision_parameter(selection_sampling,double,50.0) /**< controls sampling
 class_precision_parameter(selection_sampling_bessel,double,20.0)/**< controls sampling of integral over time when selection functions vary slower than Bessel functions. Increase for better sampling. IMPORTANT for lensed contributions. */
 class_precision_parameter(selection_sampling_bessel_los,double,ppr->selection_sampling_bessel)/**< controls sampling of integral over time when selection functions vary slower than Bessel functions. This parameter is specific to number counts contributions to Cl integrated along the line of sight. Increase for better sampling */
 class_precision_parameter(selection_tophat_edge,double,0.1) /**< controls how smooth are the edge of top-hat window function (<<1 for very sharp, 0.1 for sharp) */
+
+class_precision_parameter(selection_f_evo_step_count, int, 10) /**< step count in integrals for transfer_f_evo and transfer_dln_dNdz_dz_analytic; frequency dependent agwb window function */
+class_precision_parameter(selection_z_max, double, 8.0) /**< z_max considered for calculations in transfer_f_evo, transfer_dln_dNdz_dz_analytic and transfer_agwb_monopole */
+class_precision_parameter(transfer_bbh_step_count, int, 10) /**< step count for integration in transfer_bbh_merger_rate */
+class_precision_parameter(transfer_bbh_0_step_count, int, 100) /**< step count for integration in transfer_bbh_merger_rate_0 */
+class_precision_parameter(transfer_nonlin_hmf_overdensity_Delta, double, 800.0) /**< Delta used in nonlinear_halo_mass_function */
+class_precision_parameter(transfer_bbh_t_d_min, double, 15.321) /**< minimum delay time for delay function in bbh merger rate in Mpc; default from 2206.02747 */
+class_precision_parameter(transfer_bbh_t_step_count, int, 10) /**< delay time step count in integration for delay function in transfer_bbh_merger_rate */
+class_precision_parameter(transfer_bbh_0_t_step_count, int, 10) /**< delay time step count in integration for delay function in transfer_bbh_merger_rate_0 */
+class_precision_parameter(transfer_omega_z_step_count, int, 100) /**< z step count in integration for transfer_agwb_monopole */
 
 /*
  * Nonlinear module precision parameters

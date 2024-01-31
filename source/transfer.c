@@ -2786,12 +2786,12 @@ int transfer_dln_dNdz_dz_analytic(
     if ((ptr->selection_window == gw_frequency_dep 
           && ptr->disable_gw_evo_bias == _FALSE_)) {
       
-      const int f_evo_step_count = 10;
+      const int f_evo_step_count = ppr->selection_f_evo_step_count;
       double product_f_evo[3*f_evo_step_count];
       int i_z;
       double bbh_merger_rate_run;
       double dE_df_e_dOmega_e_run;
-      double z_max = 8.0;
+      double z_max = ppr->selection_z_max;
       double z_run;
 
       //loop over redshift
@@ -3112,7 +3112,7 @@ int transfer_bbh_merger_rate_0(
   double m_halo_max = 4*pow(10., 12.);
   // double m_halo_min = pow(10., 10.); //initial values in solar masses/h - range from Tinker et al. arXiv:0803.2706
   // double m_halo_max = pow(10., 16.);
-  const int step_count = 100; //how many calculated points for the spline for the integration
+  const int step_count = ppr->transfer_bbh_0_step_count; //how many calculated points for the spline for the integration
   double m_halo;
   double integrand_d_m_halo[3*step_count]; //integrand array for the M integration: SFR*HMF, 3 columns
   double rho_m;
@@ -3144,7 +3144,7 @@ int transfer_bbh_merger_rate_0(
                                             pnl,
                                             R, // in Mpc
                                             z_0,
-                                            800.0, //overdensity Delta,
+                                            ppr->transfer_nonlin_hmf_overdensity_Delta, //overdensity Delta,
                                             &M, // output in Msun/h
                                             &sigma,
                                             &dsigma2_dR,
@@ -3190,8 +3190,8 @@ int transfer_bbh_merger_rate_0(
                                   ptr->error_message);
 
     int i_time_delay;
-    double t_d_min = 15.321; //in Mpc from 50 Myr, from 2206.02747
-    const int t_step_count = 10;
+    double t_d_min = ppr->transfer_bbh_t_d_min; //in Mpc from 50 Myr, from 2206.02747
+    const int t_step_count = ppr->transfer_bbh_0_t_step_count;
     double integrand_time_delay[3*t_step_count]; //integrand array for the t integration, 3 columns
     //i belive in you
 
@@ -3239,7 +3239,7 @@ int transfer_bbh_merger_rate(
   int    i_m_halo;
   double m_halo_min = 3*pow(10., 11.); //initial values in solar masses/h - range from Tinker et al. arXiv:0803.2706
   double m_halo_max = 4*pow(10., 12.); //10**12 until 2.4*10**12
-  const int step_count = 10; //how many calculated points for the integration
+  const int step_count = ppr->transfer_bbh_step_count; //how many calculated points for the integration
   double m_halo;
   double integrand_d_m_halo[3*step_count]; //integrand array for the M integration: SFR*HMF, 3 columns
   double rho_m;
@@ -3267,7 +3267,7 @@ int transfer_bbh_merger_rate(
                                             pnl,
                                             R, // in Mpc
                                             z,
-                                            800.0, //overdensity Delta,
+                                            ppr->transfer_nonlin_hmf_overdensity_Delta, //overdensity Delta,
                                             &M, // output in Msun/h
                                             &sigma,
                                             &dsigma2_dR,
@@ -3311,8 +3311,8 @@ int transfer_bbh_merger_rate(
                                   ptr->error_message);
 
     int i_time_delay;
-    double t_d_min = 15.321; //in Mpc from 50 Myr, from 2206.02747
-    const int t_step_count = 10;
+    double t_d_min = ppr->transfer_bbh_t_d_min; //in Mpc from 50 Myr, from 2206.02747
+    const int t_step_count = ppr->transfer_bbh_t_step_count;
     double integrand_time_delay[3*t_step_count]; //integrand array for the t integration, 3 columns
     //i belive in you
 
@@ -6168,9 +6168,9 @@ int transfer_f_evo(
       // fpt_f = fopen("evolution_bias_f.csv", "w+");
       int i_z;
       double z_run;
-      const int f_evo_step_count = 5;
+      const int f_evo_step_count = ppr->selection_f_evo_step_count;
       double f_evo_run;
-      double z_max = 8;
+      double z_max = ppr->selection_z_max;
 
       for(i_z = 0; i_z < f_evo_step_count; i_z++) {
 
@@ -6216,7 +6216,7 @@ int transfer_agwb_monopole(
                           ){
   
 
-  const int omega_z_step_count = 100; // make into a precision parameter
+  const int omega_z_step_count = ppr->transfer_omega_z_step_count;
   double integrand_omega_agwb[3*omega_z_step_count];
   int i_z;
   double z_run;
@@ -6226,7 +6226,7 @@ int transfer_agwb_monopole(
   double pvecback[pba->bg_size_short];
   int last_index;
 
-  double z_max = 8; // make into a precision parameter
+  double z_max = ppr->selection_z_max;
 
   for(i_z = 0; i_z < omega_z_step_count; i_z++) {
     z_run = z_max*(double)i_z/omega_z_step_count + 0.1;
