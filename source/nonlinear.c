@@ -1070,7 +1070,6 @@ int nonlinear_halo_mass_function(
                                ) {
   double rho_m;
   double logDelta;
-  double dsigma_dR;
   enum out_sigmas sigma_output;
 
   // Tinker 2008 coefficients
@@ -1117,11 +1116,10 @@ int nonlinear_halo_mass_function(
                                   z, 
                                   pnl->index_pk_m,
                                   sigma_output, 
-                                  &dsigma_dR),
+                                  dsigma2_dR),
              pnl->error_message,
              pnl->error_message);
  
-  *dsigma2_dR = 2 * *sigma * dsigma_dR;
   //printf("dsigma2_dR %.6e \n", *dsigma2_dR);
 
   /* differential mass function */
@@ -1159,7 +1157,7 @@ int nonlinear_halo_mass_function(
   
   // Dimensionless halo mass function: (M^2/rho_m)*(dn/dM) = -1/6 R f(sigma) sigma^-2 (d sigma^2 / dR)
 
-  *M2_over_rho_dn_dM = -1./6.*R/ *sigma / *sigma * *f * *dsigma2_dR; // (M^2/rho_m)*(dn/dM) : dimensionless
+  *M2_over_rho_dn_dM = -1./6.* R/ *sigma / *sigma * *f * *dsigma2_dR; // (M^2/rho_m)*(dn/dM) : dimensionless
 
   return _SUCCESS_;
 }
