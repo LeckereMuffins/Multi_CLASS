@@ -1008,6 +1008,33 @@ cdef class Class:
             raise CosmoSevereError(self.nl.error_message)
 
         return sigma_cb
+    
+    # Gives halo mass function for a given (R, z, Delta)
+    def halo_mass_function(self,double R, double z, double Delta):
+        """
+        Returns dictionary with following entries:
+        "M": input R converted to mass in M_sun/h
+        "sigma": sigma at R,z, dimensionless
+        "dsigma2_dR": derivative of sigma^2 wrt R at R,z in 1/Mpc
+        "f": fitting function from Tinker et al. 2008, dimensionless
+        "dn_dM": halo mass function in h^4/M_sun/Mpc^3
+        "M2_over_rho_dn_dM": M^2/rho_m * dn/dM, dimensionless
+        """
+
+        cdef double M
+        cdef double sigma
+        cdef double dsigma2_dR
+        cdef double f
+        cdef double dn_dM
+        cdef double M2_over_rho_dn_dM
+
+        if nonlinear_halo_mass_function(&self.pr,&self.ba,&self.nl,R,z,Delta,&M,&sigma,&dsigma2_dR,&f,&dn_dM,&M2_over_rho_dn_dM)==_FAILURE_:
+            raise CosmoSevereError(self.nl.error_message)
+        
+        cdef dict output 
+        output = {"M":M, "sigma":sigma, "dsigma2_dR":dsigma2_dR, "f":f, "dn_dM":dn_dM, "M2_over_rho_dn_dM":M2_over_rho_dn_dM}
+
+        return output
 
     # Gives effective logarithmic slope of P_L(k,z) (total matter) for a given (k,z)
     def pk_tilt(self,double k,double z):

@@ -412,6 +412,20 @@ cdef extern from "class.h":
         int index_pk,
         int sigma_output,
         double * result)
+    
+    int nonlinear_halo_mass_function(
+        void * ppr,
+        void * pba,
+        void * pnl,
+        double R,
+        double z,
+        double Delta,
+        double * M,
+        double * sigma,
+        double * dsigma2_dR,
+        double * f,
+        double * dn_dM,
+        double * M2_over_rho_dn_dM)
 
     int nonlinear_pks_at_kvec_and_zvec(
         void * pba,
