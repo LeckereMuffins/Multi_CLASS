@@ -474,3 +474,15 @@ cdef extern from "class.h":
                   double * pk_tot_out,
                   double * pk_cb_tot_out,
                   int nonlinear)
+
+    int transfer_selection_function(
+                                void * pba,
+                                void * ppr,
+                                void * ppt,
+                                void * ppm,
+                                void * pnl,
+                                void * ptr,
+                                int bin,
+                                int tracer,
+                                double z,
+                                double * selection)

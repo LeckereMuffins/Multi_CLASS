@@ -1035,6 +1035,15 @@ cdef class Class:
         output = {"M":M, "sigma":sigma, "dsigma2_dR":dsigma2_dR, "f":f, "dn_dM":dn_dM, "M2_over_rho_dn_dM":M2_over_rho_dn_dM}
 
         return output
+    
+    # Gives window function
+    def window_function(self, double z):
+        cdef double selection
+
+        if transfer_selection_function(&self.ba,&self.pr,&self.pt,&self.pm,&self.nl,&self.tr,0,0,z,&selection) == _FAILURE_:
+            raise CosmoSevereError(self.tr.error_message)
+        
+        return selection
 
     # Gives effective logarithmic slope of P_L(k,z) (total matter) for a given (k,z)
     def pk_tilt(self,double k,double z):
