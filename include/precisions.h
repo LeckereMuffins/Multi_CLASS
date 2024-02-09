@@ -419,6 +419,7 @@ class_precision_parameter(transfer_bbh_t_d_min, double, 15.321) /**< minimum del
 class_precision_parameter(transfer_bbh_t_step_count, int, 10) /**< delay time step count in integration for delay function in transfer_bbh_merger_rate */
 class_precision_parameter(transfer_bbh_0_t_step_count, int, 10) /**< delay time step count in integration for delay function in transfer_bbh_merger_rate_0 */
 class_precision_parameter(transfer_omega_z_step_count, int, 100) /**< z step count in integration for transfer_agwb_monopole */
+class_precision_parameter(transfer_bbh_merger_rate_0_normalisation, double, 28.3) /**< Experimentally measured limit on the bbh merger rate in 1/Gpc^3/yr. Default from arxiv:2111.03606 */
 
 /*
  * Nonlinear module precision parameters

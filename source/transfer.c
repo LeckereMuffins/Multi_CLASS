@@ -3413,7 +3413,7 @@ int transfer_bbh_merger_rate(
   */
 
   //printf("normalisation merger rate %.6e\n", bbh_merger_rate_0);
-  * bbh_merger_rate *= 1.9*pow(10, -8)/(ptr->bbh_merger_rate_0); // in 1/Mpc^3/yr
+  * bbh_merger_rate *= ppr->transfer_bbh_merger_rate_0_normalisation*pow(10, -9)/(ptr->bbh_merger_rate_0); // in 1/Mpc^3/yr
 
   // save calculated bbh merger rate
   if (ptr->saved_bbh_merger_rates >= ptr->size_bbh_merger_rates){
