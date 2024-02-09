@@ -1107,7 +1107,7 @@ int nonlinear_halo_mass_function(
              pnl->error_message,
              pnl->error_message);
 
-  sigma_output = out_sigma_prime;
+  sigma_output = out_sigma_prime; // This way the function below returns the derivative of sigma^2 wrt. R
   class_call(nonlinear_sigmas_at_z(
                                   ppr, 
                                   pba, 

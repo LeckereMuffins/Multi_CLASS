@@ -20,7 +20,7 @@ enum source_extrapolation {extrap_zero,extrap_only_max,extrap_only_max_units,ext
 enum halofit_integral_type {halofit_integral_one, halofit_integral_two, halofit_integral_three};
 
 enum hmcode_baryonic_feedback_model {nl_emu_dmonly, nl_owls_dmonly, nl_owls_ref, nl_owls_agn, nl_owls_dblim, nl_user_defined};
-enum out_sigmas {out_sigma,out_sigma_prime,out_sigma_disp};
+enum out_sigmas {out_sigma,out_sigma_prime,out_sigma_disp}; /**< out_sigma_prime returns the derivative of sigma^2 wrt. R */
 
 /**
  * Structure containing all information on non-linear spectra.
