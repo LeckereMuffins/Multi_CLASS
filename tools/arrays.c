@@ -2548,7 +2548,7 @@ int array_interpolate_spline_growing_hunt(
 /**
  * interpolate linearily to get y_i(x), when x and y_i are in two different arrays
  *
- * Called by transfer_interpolate_sources(); transfer_functions_at_k(); perturb_sources_at_eta().
+ * Called by transfer_interpolate_sources(); transfer_functions_at_k(); perturb_sources_at_eta(); transfer_bbh_merger_rate(); transfer_bbh_merger_rate_0().
  */
 int array_interpolate_two(
 		   double * array_x,

@@ -3254,44 +3254,87 @@ int transfer_bbh_merger_rate(
   double v_mpeak;
   double loop_progress;
 
-  for(i_m_halo = 0; i_m_halo < step_count; i_m_halo++){ //loop over halo mass
+  double tau; //necessary for time delay fct.
+  class_call(background_tau_of_z(pba,
+                                 z,
+                                 &tau),
+                                 pba->error_message,
+                                 ptr->error_message);
 
-    loop_progress = (double)(i_m_halo)/(double)(step_count);
-    m_halo        = m_halo_min*pow(m_halo_max/m_halo_min, loop_progress); //in Msun
-    rho_m         = (pba->Omega0_b+pba->Omega0_cdm) * pba->H0 * pba->H0; // 8piG rho_m / (3c^2) in units of Mpc^-2
-    rho_m         *= 3.*_c_*_c_/8./_PI_/_G_ *_Mpc_over_m_ / _Msun_; // rho_m in units of (Msun) / Mpc^3
-    R             = pow(3*m_halo/(4*_PI_*rho_m), 1./3.); //R is passed instead of M
+  double pvecback[pba->bg_size];
+  int last_index;
+  class_call(background_at_tau(pba,
+                                tau,
+                                pba->long_info,
+                                pba->inter_normal,
+                                &last_index,
+                                pvecback),
+                                pba->error_message,
+                                ptr->error_message);
+  
+  double t_of_z = pvecback[pba->index_bg_time];
 
-    class_call(nonlinear_halo_mass_function(ppr,
-                                            pba,
-                                            pnl,
-                                            R, // in Mpc
-                                            z,
-                                            ppr->transfer_nonlin_hmf_overdensity_Delta, //overdensity Delta,
-                                            &M, // output in Msun/h
-                                            &sigma,
-                                            &dsigma2_dR,
-                                            &f,
-                                            &dn_dM, //in Msun^-1 Mpc^-3
-                                            &M2_over_rho_dn_dM),
-                                            pnl->error_message,
-                                            ptr->error_message);
+  // sample for integral over t_d
+  double t_d_min = ppr->transfer_bbh_t_d_min; //in Mpc from 50 Myr, from 2206.02747
+  const int t_step_count = ppr->transfer_bbh_t_step_count;
+  double integrand_time_delay[3*t_step_count]; //integrand array for the t integration, 3 columns
 
-    //printf("HMF, z0 %.6e\n", dn_dM);
+  for (int i_time_delay = 0; i_time_delay < t_step_count; i_time_delay++){
+    double t_delay = t_d_min+(double)i_time_delay/(double)t_step_count*(t_of_z-t_d_min);
 
-    class_call(transfer_star_formation_rate(pba,
-                                            z,
-                                            m_halo, //in solar masses
-                                            &star_fr), //Msun per year
-                                            ptr->error_message,
-                                            ptr->error_message); 
+    // calculate z_f(t_of_z - t_delay) by interpolating proper time from background table with z
+    double z_f;
+    class_call(array_interpolate_two(pba->background_table,
+                                      pba->bg_size,
+                                      pba->index_bg_time,
+                                      pba->z_table,
+                                      1,
+                                      pba->bt_size,
+                                      t_of_z - t_delay,
+                                      &z_f,
+                                      1,
+                                      ptr->error_message),
+                                      ptr->error_message,
+                                      ptr->error_message);
 
-    //printf("SFR, z0 %.6e\n", dn_dM);
+    for (i_m_halo = 0; i_m_halo < step_count; i_m_halo++){ //loop over halo mass
 
-    integrand_d_m_halo[3*i_m_halo] = m_halo;
-    integrand_d_m_halo[3*i_m_halo+1] = star_fr*(dn_dM);
-    integrand_d_m_halo[3*i_m_halo+2] = 0;
-  }
+      loop_progress = (double)(i_m_halo)/(double)(step_count);
+      m_halo        = m_halo_min*pow(m_halo_max/m_halo_min, loop_progress); //in Msun
+      rho_m         = (pba->Omega0_b+pba->Omega0_cdm) * pba->H0 * pba->H0; // 8piG rho_m / (3c^2) in units of Mpc^-2
+      rho_m         *= 3.*_c_*_c_/8./_PI_/_G_ *_Mpc_over_m_ / _Msun_; // rho_m in units of (Msun) / Mpc^3
+      R             = pow(3*m_halo/(4*_PI_*rho_m), 1./3.); //R is passed instead of M
+
+      class_call(nonlinear_halo_mass_function(ppr,
+                                              pba,
+                                              pnl,
+                                              R, // in Mpc
+                                              z_f,
+                                              ppr->transfer_nonlin_hmf_overdensity_Delta, //overdensity Delta,
+                                              &M, // output in Msun/h
+                                              &sigma,
+                                              &dsigma2_dR,
+                                              &f,
+                                              &dn_dM, //in Msun^-1 Mpc^-3
+                                              &M2_over_rho_dn_dM),
+                                              pnl->error_message,
+                                              ptr->error_message);
+
+      //printf("HMF, z0 %.6e\n", dn_dM);
+
+      class_call(transfer_star_formation_rate(pba,
+                                              z_f,
+                                              m_halo, //in solar masses
+                                              &star_fr), //Msun per year
+                                              ptr->error_message,
+                                              ptr->error_message); 
+
+      //printf("SFR, z0 %.6e\n", dn_dM);
+
+      integrand_d_m_halo[3*i_m_halo] = m_halo;
+      integrand_d_m_halo[3*i_m_halo+1] = star_fr*(dn_dM);
+      integrand_d_m_halo[3*i_m_halo+2] = 0;
+    }
 
     class_call(array_integrate(integrand_d_m_halo,
                               3, //columns
@@ -3303,68 +3346,57 @@ int transfer_bbh_merger_rate(
                               ptr->error_message,
                               ptr->error_message);
 
-    double tau; //necessary for time delay fct.
-    class_call(background_tau_of_z(pba,
-                                  z,
-                                  &tau),
-                                  pba->error_message,
-                                  ptr->error_message);
 
-    int i_time_delay;
-    double t_d_min = ppr->transfer_bbh_t_d_min; //in Mpc from 50 Myr, from 2206.02747
-    const int t_step_count = ppr->transfer_bbh_t_step_count;
-    double integrand_time_delay[3*t_step_count]; //integrand array for the t integration, 3 columns
-    //i belive in you
+    // time delay actual integration
+    //printf("t_d %.6e\n", t_d_min+i_time_delay/t_step_count*(tau-t_d_min));
+    integrand_time_delay[3*i_time_delay] = t_delay;
+    integrand_time_delay[3*i_time_delay+1] = (integrand_d_m_halo[3*(step_count-1)+2]-integrand_d_m_halo[2]) / t_delay;
+    integrand_time_delay[3*i_time_delay+2] = 0;
 
-    for(i_time_delay=0; i_time_delay<t_step_count; i_time_delay++){
+  }
 
-      //printf("t_d %.6e\n", t_d_min+i_time_delay/t_step_count*(tau-t_d_min));
-      integrand_time_delay[3*i_time_delay] = t_d_min+(double)i_time_delay/(double)t_step_count*(tau-t_d_min);
-      integrand_time_delay[3*i_time_delay+1] = 1/(t_d_min+i_time_delay/t_step_count*(tau-t_d_min));
-      integrand_time_delay[3*i_time_delay+2] = 0;
+  class_call(array_integrate(integrand_time_delay,
+                             3,
+                             t_step_count,
+                             0,
+                             1,
+                             2,
+                             ptr->error_message),
+                             ptr->error_message,
+                             ptr->error_message);
 
-    }
+  * bbh_merger_rate = (integrand_time_delay[3*(t_step_count-1)+2] - integrand_time_delay[2]) / log(t_of_z/t_d_min);
 
-    class_call(array_integrate(integrand_time_delay,
-                                3,
-                                t_step_count,
-                                0,
-                                1,
-                                2,
-                                ptr->error_message),
-                                ptr->error_message,
-                                ptr->error_message);
+  //double time_delay_factor; // wrong 
+  //time_delay_factor = integrand_time_delay[2] - integrand_time_delay[3*(t_step_count-1)+2];
+  //time_delay_factor *= log(tau/t_d_min);
 
-    double time_delay_factor;
-    time_delay_factor = integrand_time_delay[2] - integrand_time_delay[3*(t_step_count-1)+2];
-    time_delay_factor *= log(tau/t_d_min);
+  //* bbh_merger_rate = time_delay_factor*(integrand_d_m_halo[3*(step_count-1)+2]-integrand_d_m_halo[2]); //change units?
 
-    * bbh_merger_rate = time_delay_factor*(integrand_d_m_halo[3*(step_count-1)+2]-integrand_d_m_halo[2]); //change units?
+  //NORMALISATION
+  /* (calculation moved outside of loops)
+  double bbh_merger_rate_0;
+  class_call(transfer_bbh_merger_rate_0(
+                                        ppr,
+                                        pba,
+                                        pnl,
+                                        ptr,
+                                        &bbh_merger_rate_0),
+                                        ptr->error_message,
+                                        ptr->error_message);
+  */
 
-    //NORMALISATION
-    /*
-    double bbh_merger_rate_0;
-    class_call(transfer_bbh_merger_rate_0(
-                                          ppr,
-                                          pba,
-                                          pnl,
-                                          ptr,
-                                          &bbh_merger_rate_0),
-                                          ptr->error_message,
-                                          ptr->error_message);
-    */
+  //printf("normalisation merger rate %.6e\n", bbh_merger_rate_0);
+  * bbh_merger_rate *= 1.9*pow(10, -8)/(ptr->bbh_merger_rate_0);
 
-    //printf("normalisation merger rate %.6e\n", bbh_merger_rate_0);
-    * bbh_merger_rate *= 1.9*pow(10, -8)/(ptr->bbh_merger_rate_0);
-
-    // save calculated bbh merger rate
-    if (ptr->saved_bbh_merger_rates >= ptr->size_bbh_merger_rates){
-      ptr->size_bbh_merger_rates += 10;
-      class_realloc(ptr->bbh_merger_rates, ptr->bbh_merger_rates, 2*ptr->size_bbh_merger_rates*sizeof(double), ptr->error_message);
-    }
-    ptr->bbh_merger_rates[2*ptr->saved_bbh_merger_rates] = z;
-    ptr->bbh_merger_rates[2*ptr->saved_bbh_merger_rates+1] = *bbh_merger_rate;
-    ptr->saved_bbh_merger_rates += 1;
+  // save calculated bbh merger rate
+  if (ptr->saved_bbh_merger_rates >= ptr->size_bbh_merger_rates){
+    ptr->size_bbh_merger_rates += 10;
+    class_realloc(ptr->bbh_merger_rates, ptr->bbh_merger_rates, 2*ptr->size_bbh_merger_rates*sizeof(double), ptr->error_message);
+  }
+  ptr->bbh_merger_rates[2*ptr->saved_bbh_merger_rates] = z;
+  ptr->bbh_merger_rates[2*ptr->saved_bbh_merger_rates+1] = *bbh_merger_rate;
+  ptr->saved_bbh_merger_rates += 1;
 
   return _SUCCESS_;
 }
