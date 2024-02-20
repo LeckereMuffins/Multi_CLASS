@@ -1035,7 +1035,19 @@ cdef class Class:
         output = {"M":M, "sigma":sigma, "dsigma2_dR":dsigma2_dR, "f":f, "dn_dM":dn_dM, "M2_over_rho_dn_dM":M2_over_rho_dn_dM}
 
         return output
+
+    def star_formation_rate(self, double z, double m_halo):
+        cdef double SFR
+        if transfer_star_formation_rate(&self.ba, z, m_halo, &SFR) == _FAILURE_:
+            raise CosmoSevereError(self.tr.error_message)
+        return SFR
     
+    def bbh_merger_rate(self,double z):
+        cdef double rate
+        if transfer_bbh_merger_rate(&self.pr,&self.ba,&self.nl,&self.tr,z,&rate) == _FAILURE_:
+            raise CosmoSevereError(self.tr.error_message)
+        return rate
+
     # Gives window function
     def window_function(self, double z):
         cdef double selection

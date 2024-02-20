@@ -2591,7 +2591,7 @@ int transfer_selection_function(
 
     //using arXiv:2206.02747, window function from equation 2.5
 
-    double pvecback[pba->bg_size_short];
+    double pvecback[pba->bg_size];
     int last_index;
     // FILE *fpt_dE_df;
     // fpt_dE_df = fopen("dE_df_of_z.csv", "w+");
@@ -2623,6 +2623,18 @@ int transfer_selection_function(
                                           &dE_df_e_dOmega_e),
                                           ptr->error_message,
                                           ptr->error_message);
+    
+    // get critical density for today
+    class_call(background_at_tau(pba,
+                                pba->conformal_age,
+                                pba->long_info,
+                                pba->inter_normal,
+                                &last_index,
+                                pvecback),
+                                pba->error_message,
+                                ptr->error_message);
+    
+    double critical_density = pvecback[pba->index_bg_rho_crit];
 
     double tau;
     class_call(background_tau_of_z(pba,
@@ -2633,16 +2645,18 @@ int transfer_selection_function(
 
     class_call(background_at_tau(pba,
                                   tau,
-                                  pba->short_info,
+                                  pba->long_info,
                                   pba->inter_normal,
                                   &last_index,
                                   pvecback),
                                   pba->error_message,
                                   ptr->error_message);
 
-    // below is eq. (3.47) * H(z) in thesis F.Keil
-    *selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency/((1+z)*ptr->agwb_monopole*_c_*_c_*pvecback[pba->index_bg_rho_crit]); // extra _c_ and pow because gw_frequency is in Hz
-    //*selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency*(3.1*pow(10, 22))/((1+z)*ptr->agwb_monopole*_c_*_c_*_c_*pvecback[pba->index_bg_rho_crit]); // extra _c_ and pow because gw_frequency is in Hz
+    // below is eq. (3.47) in thesis F.Keil
+    //printf("Selection Function: \nBBH Merger Rate: %3e\ndE...: %3e\nf: %3e\nz: %3e\nH: %3e\nMonopole: %3e\nc: %3e\nrho: %3e\n\n",bbh_merger_rate,dE_df_e_dOmega_e,ptr->gw_frequency,z,pvecback[pba->index_bg_H],ptr->agwb_monopole,_c_,pvecback[pba->index_bg_rho_crit]);
+    //return _FAILURE_;
+    //*selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency/((1+z)*pvecback[pba->index_bg_H]*ptr->agwb_monopole*_c_*_c_*pvecback[pba->index_bg_rho_crit]); // extra _c_ and pow because gw_frequency is in Hz
+    *selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency*(3.1*pow(10, 22))/((1+z)*pvecback[pba->index_bg_H]*ptr->agwb_monopole*_c_*_c_*_c_*critical_density); // extra _c_ and pow because gw_frequency is in Hz
     //*selection = bbh_merger_rate;
     //printf("window fct. without dNdz %.6e\n", *selection);
 
@@ -2655,7 +2669,7 @@ int transfer_selection_function(
                             ptr->error_message,
                             ptr->error_message);
     
-    *selection *= dNdz;
+    //*selection *= dNdz;
 
     //printf("window fct. with dNdz %.6e\n", *selection);
 
@@ -3090,7 +3104,7 @@ int transfer_star_formation_rate(
 
   delta = 0.055;
 
-  //reference mass at 200 km/s converted to solar masses per h
+  //reference mass at 200 km/s converted to solar masses 
   m_200 = 1.64*pow(10,12)/(pow((pba->a_today/(z + 1))/0.378, -0.142) + pow((pba->a_today/(z + 1))/0.378, -1.79));
   v_mpeak = 200*pow((m_halo/m_200), 3); //in km/s
 
@@ -3148,28 +3162,47 @@ int transfer_bbh_merger_rate_0(
   
   double t_0 = pvecback[pba->index_bg_time];
 
-  // sample for integral over t_d
+  // sample for integral over t_d, but sampling is done for linearly spaced values of z
   double t_d_min = ppr->transfer_bbh_t_d_min; //in Mpc from 50 Myr, from 2206.02747
+  double z_f_min;
+  class_call(array_interpolate_two(pba->background_table,
+                                    pba->bg_size,
+                                    pba->index_bg_time,
+                                    pba->z_table,
+                                    1,
+                                    pba->bt_size,
+                                    t_0 - t_d_min,
+                                    &z_f_min,
+                                    1,
+                                    ptr->error_message),
+                                    ptr->error_message,
+                                    ptr->error_message);
+
   const int t_step_count = ppr->transfer_bbh_0_t_step_count;
   double integrand_time_delay[3*t_step_count]; //integrand array for the t integration, 3 columns
 
   for (int i_time_delay = 0; i_time_delay < t_step_count; i_time_delay++){
-    double t_delay = t_d_min+(double)i_time_delay/(double)t_step_count*(t_0-t_d_min);
+    double z_f = z_f_min + (double)i_time_delay/(double)t_step_count*ppr->transfer_z_max_delay;
 
-    // calculate z_f(t_of_z - t_delay) by interpolating proper time from background table with z
-    double z_f;
-    class_call(array_interpolate_two(pba->background_table,
-                                      pba->bg_size,
-                                      pba->index_bg_time,
-                                      pba->z_table,
-                                      1,
-                                      pba->bt_size,
-                                      t_0 - t_delay,
-                                      &z_f,
-                                      1,
-                                      ptr->error_message),
-                                      ptr->error_message,
-                                      ptr->error_message);
+    // calculate t_delay(z_f) by interpolating proper time from background table with z
+    double tau_f;
+    class_call(background_tau_of_z(pba,
+                                    z_f,
+                                    &tau_f),
+                                    pba->error_message,
+                                    ptr->error_message);
+
+    double t_delay;
+    class_call(background_at_tau(pba,
+                                  tau_f,
+                                  pba->long_info,
+                                  pba->inter_normal,
+                                  &last_index,
+                                  pvecback),
+                                  pba->error_message,
+                                  ptr->error_message);
+
+    t_delay = t_0 - pvecback[pba->index_bg_time];
 
     for (i_m_halo = 0; i_m_halo < step_count; i_m_halo++){ //loop over halo mass
 
@@ -3300,28 +3333,48 @@ int transfer_bbh_merger_rate(
   
   double t_of_z = pvecback[pba->index_bg_time];
 
-  // sample for integral over t_d
+  // sample for integral over t_d, but sampling is done for linearly spaced values of z
   double t_d_min = ppr->transfer_bbh_t_d_min; //in Mpc from 50 Myr, from 2206.02747
+  double z_f_min;
+  class_call(array_interpolate_two(pba->background_table,
+                                    pba->bg_size,
+                                    pba->index_bg_time,
+                                    pba->z_table,
+                                    1,
+                                    pba->bt_size,
+                                    t_of_z - t_d_min,
+                                    &z_f_min,
+                                    1,
+                                    ptr->error_message),
+                                    ptr->error_message,
+                                    ptr->error_message);
+
+
   const int t_step_count = ppr->transfer_bbh_t_step_count;
   double integrand_time_delay[3*t_step_count]; //integrand array for the t integration, 3 columns
 
   for (int i_time_delay = 0; i_time_delay < t_step_count; i_time_delay++){
-    double t_delay = t_d_min+(double)i_time_delay/(double)t_step_count*(t_of_z-t_d_min);
+    double z_f = z_f_min + (double)i_time_delay/(double)t_step_count*ppr->transfer_z_max_delay;
 
-    // calculate z_f(t_of_z - t_delay) by interpolating proper time from background table with z
-    double z_f;
-    class_call(array_interpolate_two(pba->background_table,
-                                      pba->bg_size,
-                                      pba->index_bg_time,
-                                      pba->z_table,
-                                      1,
-                                      pba->bt_size,
-                                      t_of_z - t_delay,
-                                      &z_f,
-                                      1,
-                                      ptr->error_message),
-                                      ptr->error_message,
-                                      ptr->error_message);
+    // calculate t_delay(z_f) by interpolating proper time from background table with z
+    double tau_f;
+    class_call(background_tau_of_z(pba,
+                                    z_f,
+                                    &tau_f),
+                                    pba->error_message,
+                                    ptr->error_message);
+
+    double t_delay;
+    class_call(background_at_tau(pba,
+                                  tau_f,
+                                  pba->long_info,
+                                  pba->inter_normal,
+                                  &last_index,
+                                  pvecback),
+                                  pba->error_message,
+                                  ptr->error_message);
+
+    t_delay = t_of_z - pvecback[pba->index_bg_time];
 
     for (i_m_halo = 0; i_m_halo < step_count; i_m_halo++){ //loop over halo mass
 
@@ -6281,7 +6334,7 @@ int transfer_agwb_monopole(
   double bbh_merger_rate_run;
   double dE_df_e_dOmega_e_run;
   double tau_run;
-  double pvecback[pba->bg_size_short];
+  double pvecback[pba->bg_size];
   int last_index;
 
   double z_max = ppr->selection_z_max;
@@ -6297,7 +6350,7 @@ int transfer_agwb_monopole(
 
     class_call(background_at_tau(pba,
                                 tau_run,
-                                pba->short_info,
+                                pba->long_info,
                                 pba->inter_normal,
                                 &last_index,
                                 pvecback),
@@ -6355,10 +6408,19 @@ int transfer_agwb_monopole(
                             ptr->error_message,
                             ptr->error_message);
 
+  class_call(background_at_tau(pba,
+                                pba->conformal_age,
+                                pba->long_info,
+                                pba->inter_normal,
+                                &last_index,
+                                pvecback),
+                                pba->error_message,
+                                ptr->error_message);
+
   //plug in integration limits
   double integral = integrand_omega_agwb[3*(omega_z_step_count-1)+2]-integrand_omega_agwb[2];
-  ptr->agwb_monopole = integral*ptr->gw_frequency/pvecback[pba->index_bg_rho_crit]/_c_/_c_; ///_c_*(3.1*pow(10, 22))
-  // frequency above is in Hz, _c_ * (3.1*pow(...)) changes it to 1/Mpc. Is the dE_df_e_dOmega_e in the integral in natural units?
+  ptr->agwb_monopole = integral*ptr->gw_frequency/pvecback[pba->index_bg_rho_crit]/_c_/_c_/_c_*(3.1*pow(10, 22));
+  // frequency above is in Hz, _c_ * (3.1*pow(...)) changes it to 1/Mpc. Only true if the following is true: Is the dE_df_e_dOmega_e in the integral in natural units?
   
   //printf("upper bound %.6e\n", integrand_omega_agwb[3*(omega_z_step_count-1)+2]);
   //printf("lower bound %.6e\n", integrand_omega_agwb[2]);

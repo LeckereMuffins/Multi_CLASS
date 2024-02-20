@@ -486,3 +486,18 @@ cdef extern from "class.h":
                                 int tracer,
                                 double z,
                                 double * selection)
+
+    int transfer_bbh_merger_rate(
+        void * ppr,
+        void * pba,
+        void * pnl,
+        void * ptr,
+        double z,
+        double * bbh_merger_rate)
+    
+    int transfer_star_formation_rate(
+        void * pba,
+        double z,
+        double m_halo,
+        double * star_fr
+    )
