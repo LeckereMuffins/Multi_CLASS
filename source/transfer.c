@@ -6419,7 +6419,7 @@ int transfer_agwb_monopole(
 
   //plug in integration limits
   double integral = integrand_omega_agwb[3*(omega_z_step_count-1)+2]-integrand_omega_agwb[2];
-  ptr->agwb_monopole = integral*ptr->gw_frequency/pvecback[pba->index_bg_rho_crit]/_c_/_c_ ///_c_*(3.1*pow(10, 22));
+  ptr->agwb_monopole = integral*ptr->gw_frequency/pvecback[pba->index_bg_rho_crit]/_c_/_c_; ///_c_*(3.1*pow(10, 22));
   // frequency above is in Hz, _c_ * (3.1*pow(...)) changes it to 1/Mpc. Only true if the following is true: Is the dE_df_e_dOmega_e in the integral in natural units?
   
   //printf("upper bound %.6e\n", integrand_omega_agwb[3*(omega_z_step_count-1)+2]);
