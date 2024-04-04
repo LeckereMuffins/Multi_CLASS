@@ -2655,8 +2655,8 @@ int transfer_selection_function(
     // below is eq. (3.47) in thesis F.Keil
     //printf("Selection Function: \nBBH Merger Rate: %3e\ndE...: %3e\nf: %3e\nz: %3e\nH: %3e\nMonopole: %3e\nc: %3e\nrho: %3e\n\n",bbh_merger_rate,dE_df_e_dOmega_e,ptr->gw_frequency,z,pvecback[pba->index_bg_H],ptr->agwb_monopole,_c_,pvecback[pba->index_bg_rho_crit]);
     //return _FAILURE_;
-    *selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency/((1+z)*pvecback[pba->index_bg_H]*ptr->agwb_monopole*_c_*_c_*critical_density); // extra _c_ and pow because gw_frequency is in Hz see transfer_agwb_monopole for more info
-    //*selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency*(3.1*pow(10, 22))/((1+z)*pvecback[pba->index_bg_H]*ptr->agwb_monopole*_c_*_c_*_c_*critical_density); // extra _c_ and pow because gw_frequency is in Hz
+    //*selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency/((1+z)*pvecback[pba->index_bg_H]*ptr->agwb_monopole*_c_*_c_*critical_density); // extra _c_ and pow because gw_frequency is in Hz see transfer_agwb_monopole for more info
+    *selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency*(3.1*pow(10, 22))/((1+z)*pvecback[pba->index_bg_H]*ptr->agwb_monopole*_c_*_c_*_c_*critical_density); // extra _c_ and pow because gw_frequency is in Hz
     //*selection = bbh_merger_rate;
     //printf("window fct. without dNdz %.6e\n", *selection);
 
@@ -6419,7 +6419,7 @@ int transfer_agwb_monopole(
 
   //plug in integration limits
   double integral = integrand_omega_agwb[3*(omega_z_step_count-1)+2]-integrand_omega_agwb[2];
-  ptr->agwb_monopole = integral*ptr->gw_frequency/pvecback[pba->index_bg_rho_crit]/_c_/_c_; ///_c_*(3.1*pow(10, 22));
+  ptr->agwb_monopole = integral*ptr->gw_frequency/pvecback[pba->index_bg_rho_crit]/_c_/_c_/_c_*(3.1*pow(10, 22));
   // frequency above is in Hz, _c_ * (3.1*pow(...)) changes it to 1/Mpc. Only true if the following is true: Is the dE_df_e_dOmega_e in the integral in natural units?
   
   //printf("upper bound %.6e\n", integrand_omega_agwb[3*(omega_z_step_count-1)+2]);
