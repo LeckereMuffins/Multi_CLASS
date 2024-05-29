@@ -2656,7 +2656,7 @@ int transfer_selection_function(
     //printf("Selection Function: \nBBH Merger Rate: %3e\ndE...: %3e\nf: %3e\nz: %3e\nH: %3e\nMonopole: %3e\nc: %3e\nrho: %3e\n\n",bbh_merger_rate,dE_df_e_dOmega_e,ptr->gw_frequency,z,pvecback[pba->index_bg_H],ptr->agwb_monopole,_c_,pvecback[pba->index_bg_rho_crit]);
     //return _FAILURE_;
     //*selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency/((1+z)*pvecback[pba->index_bg_H]*ptr->agwb_monopole*_c_*_c_*critical_density); // extra _c_ and pow because gw_frequency is in Hz see transfer_agwb_monopole for more info
-    // *selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency*(3.1*pow(10, 22))/((1+z)*pvecback[pba->index_bg_H]*ptr->agwb_monopole*_c_*_c_*_c_*critical_density); // extra _c_ and pow because gw_frequency is in Hz
+    // *selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency*_Mpc_over_m_/((1+z)*pvecback[pba->index_bg_H]*ptr->agwb_monopole*_c_*_c_*_c_*critical_density); // extra _c_ and pow because gw_frequency is in Hz
     *selection = bbh_merger_rate*dE_df_e_dOmega_e*ptr->gw_frequency/_c_*_Mpc_over_m_*8*_PI_/3/((1+z)*pvecback[pba->index_bg_H]*ptr->agwb_monopole*critical_density); // extra _c_ and pow because gw_frequency is in Hz
     //*selection = bbh_merger_rate;
     //printf("window fct. without dNdz %.6e\n", *selection);
@@ -2979,16 +2979,16 @@ int transfer_dE_df_e_dOmega_e(
   //Amplitude from Ajith et al., adapted by Bellomo et al. (arXiv:2110.15059)
   //Unit conversion
 
-  double gw_frequency_geom = f_0/_c_*(3.1*pow(10, 22)); // in  Mpc^-1
+  double gw_frequency_geom = f_0/_c_*_Mpc_over_m_; // in  Mpc^-1
   double f_emitted = f_0*(z+1.); //in Hertz
   //double f_emitted = f_0; //test
-  double f_emit_geom = f_emitted/_c_*(3.1*pow(10, 22)); // in Mpc^-1
+  double f_emit_geom = f_emitted/_c_*_Mpc_over_m_; // in Mpc^-1
   double total_mass = m_1 + m_2; //in solar masses
   //printf("total mass: %.6e \n", total_mass);
 
   double f_1 = _c_*_c_*_c_/(pow(6, 1.5)*_G_*2*_PI_*total_mass*_Msun_); //in Hertz
   //printf("f_1 cut: %.6e \n", f_1);
-  double f_1_geom = f_1/_c_*(3.1*pow(10, 22)); // in  Mpc^-1
+  double f_1_geom = f_1/_c_*_Mpc_over_m_; // in  Mpc^-1
   double f_2 = 12000/total_mass; //in Hertz
 
   double sigma = f_2/2;
@@ -6421,7 +6421,7 @@ int transfer_agwb_monopole(
   //plug in integration limits
   double integral = integrand_omega_agwb[3*(omega_z_step_count-1)+2]-integrand_omega_agwb[2];
   ptr->agwb_monopole = integral*ptr->gw_frequency/pvecback[pba->index_bg_rho_crit]  /_c_*_Mpc_over_m_  *8*_PI_/3;
-  // ptr->agwb_monopole = integral*ptr->gw_frequency/pvecback[pba->index_bg_rho_crit]/_c_/_c_/_c_*(3.1*pow(10, 22));
+  // ptr->agwb_monopole = integral*ptr->gw_frequency/pvecback[pba->index_bg_rho_crit]/_c_/_c_/_c_*_Mpc_over_m_;
   // frequency above is in Hz, _c_ * (3.1*pow(...)) changes it to 1/Mpc. Only true if the following is true: Is the dE_df_e_dOmega_e in the integral in natural units?
   
   //printf("upper bound %.6e\n", integrand_omega_agwb[3*(omega_z_step_count-1)+2]);
