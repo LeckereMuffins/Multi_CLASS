@@ -3001,7 +3001,7 @@ int transfer_dE_df_e_dOmega_e(
   double omega_m = (1+alpha_2*nu_1*nu_1)/(1+epsilon_1*nu_1+epsilon_2*nu_1*nu_1);
   double omega_r = _PI_*sigma*omega_m*pow(f_2/f_1, -2./3.)*(1+epsilon_1*nu_2+epsilon_2*nu_2*nu_2);
   double m_chirp = pow(m_1*m_2, 3./5.)/pow(m_1+m_2, 1./5.); //in solar masses
-  double m_chirp_geom = _Msun_*m_chirp*_G_/(_c_*_c_);
+  double m_chirp_geom = _Msun_*m_chirp*_G_/(_c_*_c_*_Mpc_over_m_);
 
   //call background for luminosity distance
 
@@ -3048,7 +3048,7 @@ int transfer_dE_df_e_dOmega_e(
     }
   }
 
-  * dE_df_e_dOmega_e = _PI_*f_0*f_0/2*h*h;
+  * dE_df_e_dOmega_e = _PI_*gw_frequency_geom*gw_frequency_geom/2*h*h;
   //* dE_df_e_dOmega_e = _PI_/2*h*h;
 
   return _SUCCESS_;
