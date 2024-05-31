@@ -2824,7 +2824,7 @@ int transfer_dln_dNdz_dz_analytic(
                                             ptr->error_message,
                                             ptr->error_message);
         //convert from Mpc^(-3)yr^(-1) to Mpc^(-4)
-        bbh_merger_rate_run *= 3.26*pow(10, 6);
+        bbh_merger_rate_run /= _Gyr_over_Mpc_ * 1e-9;
 
         class_call(transfer_dE_df_e_dOmega_e(
                                             pba,
